@@ -1,9 +1,8 @@
 /***************************************************************************//**
-  @file     board.h
-  @brief    Board management
+  @file     uart.c
+  @brief    UART driver
   @author   G4
  ******************************************************************************/
-
 
 
 /*******************************************************************************
@@ -13,6 +12,7 @@
 #include "MCAL/gpio.h"
 #include "protocols/uart.h"
 #include "hardware.h"
+#include "MK64F12.h" //Tiene el typedef UART_Type
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -47,8 +47,20 @@ static PORT_Type* PORT_PTRS[] =  { PORTC, PORTC, PORTC, PORTC, PORTC , PORTC };
 static buffer_t rx[];
 static buffer_t tx[];
 
+
 /*******************************************************************************
- * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
+ *  FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
+ ******************************************************************************/
+/**
+ * @brief Sets UART BaudRate.
+ * @param uart pointer to uart structure to set baudrate.
+ * @param baudrate chosen baudrate to set.
+ * @return void.
+ */
+void UART_SetBaudRate(UART_Type *uart, uint32_t baudrate);
+
+/*******************************************************************************
+ *  GLOBAL FUNCTIONS DEFINITIONS
  ******************************************************************************/
 void uartInit (uint8_t id, uart_cfg_t config){
 
@@ -120,4 +132,29 @@ uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant){
 	}
 
 }
+
+
+/*******************************************************************************
+ *  LOCAL FUNCTIONS DEFINITIONS
+ ******************************************************************************/
+
+//BaudRate: número de cambios en la señal por segundo o símbolos por segundo
+//BitRate: bits por segundos (bps)
+void UART_SetBaudRate(UART_Type *uart, uint32_t baudrate){
+	uint16_t sbr, brfa;
+	uint32_t clock;
+
+	clock = ((uart == UART0) || (uart == UART1))?(__CORE_CLOCK__):(__CORE_CLOCK__ >> 1);
+
+	baudrate = ((baudrate == 0)?(UART_HAL_DEFAULT_BAUDRATE):
+			((baudrate > 0x1FFF)?(UART_HAL_DEFAULT_BAUDRATE):(baudrate)));
+
+	sbr = clock / (baudrate << 4);               // sbr = clock/(Baudrate x 16)
+	brfa = (clock << 1) / baudrate - (sbr << 5); // brfa = 2*Clock/baudrate - 32*sbr
+
+	uart->BDH = UART_BDH_SBR(sbr >> 8);
+	uart->BDL = UART_BDL_SBR(sbr);
+	uart->C4 = (uart->C4 & ~UART_C4_BRFA_MASK) | UART_C4_BRFA(brfa);
+}
+
 
