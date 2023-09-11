@@ -53,6 +53,11 @@
 #define PIN_SW3         PORTNUM2PIN(PA,4)
 
 
+//UART
+#define UART0_TX_PIN 	17   //PTB17
+#define UART0_RX_PIN 	16   //PTB16
+
+
 
 //DEBUG ( pines para la DEVBOARD)
 

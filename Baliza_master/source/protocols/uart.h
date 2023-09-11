@@ -1,7 +1,7 @@
 /***************************************************************************//**
   @file     UART.c
   @brief    UART Driver for K64F. Non-Blocking and using FIFO feature
-  @author   Nicolás Magliola
+  @author   Nicolï¿½s Magliola
  ******************************************************************************/
 
 #ifndef _UART_H_
@@ -18,7 +18,7 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define UART_CANT_IDS   ????
+#define UART_CANT_IDS	5
 
 
 /*******************************************************************************
@@ -26,12 +26,22 @@
  ******************************************************************************/
 
 typedef struct {
-    ???
-    ???
-    ???
+	uint32_t baudrate;
+	bool parity;
 } uart_cfg_t;
 
+typedef enum
+{
+	PORT_mAnalog,
+	PORT_mGPIO,
+	PORT_mAlt2,
+	PORT_mAlt3,
+	PORT_mAlt4,
+	PORT_mAlt5,
+	PORT_mAlt6,
+	PORT_mAlt7,
 
+} PORTMux_t;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
