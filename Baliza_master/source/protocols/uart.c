@@ -18,11 +18,6 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define UART_HAL_DEFAULT_BAUDRATE 9600
-#define BUFFER_SIZE 32
-
-#define UART_RX_PIN	16 //Default 16 y 17
-#define UART_TX_PIN	17
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -30,6 +25,7 @@
 typedef struct {
 	char buffer[BUFFER_SIZE];
 	char* buffer_ptr;
+	char* reader_ptr;
 	uint32_t len;
 	bool done;
 } buffer_t;
@@ -44,8 +40,8 @@ static SIM_Type* SIM_PTR = SIM;
 static  UART_Type * UART_POINTERS[] = UART_BASE_PTRS;
 static PORT_Type* PORT_PTRS[] =  { PORTC, PORTC, PORTC, PORTC, PORTC , PORTC };
 
-static buffer_t rx[];
-static buffer_t tx[];
+static buffer_t rx[UART_CANT_IDS];
+static buffer_t tx[UART_CANT_IDS];
 
 
 /*******************************************************************************
@@ -62,10 +58,10 @@ void UART_SetBaudRate(UART_Type *uart, uint32_t baudrate);
 /*******************************************************************************
  *  GLOBAL FUNCTIONS DEFINITIONS
  ******************************************************************************/
-void uartInit (uint8_t id = 3, uart_cfg_t config = UART_HAL_DEFAULT_BAUDRATE){
+void uartInit (uint8_t id , uart_cfg_t config){
 
-	UART_Type* const uart_p = PORT_PTRS[id];
-	PORT_Type* const port = UART_POINTERS[id] ;
+	PORT_Type* const port = PORT_PTRS[id];
+	UART_Type* const uart_p = UART_POINTERS[id] ;
 
 	//Clock Gating
 	if((id >= 0) && (id<UART_CANT_IDS)){
@@ -89,10 +85,10 @@ void uartInit (uint8_t id = 3, uart_cfg_t config = UART_HAL_DEFAULT_BAUDRATE){
 
 	//SETEO LOS PCR
 
-	port->PCR[UART_RX_PIN(id)] = (uint32_t)0; //clear
-	port->PCR[UART_RX_PIN(id)] = PORT_PCR_MUX(PORT_mAlt3); //Alt3
-	port->PCR[UART_TX_PIN(id)] = (uint32_t)0; //clear
-	port->PCR[UART_TX_PIN(id)] = PORT_PCR_MUX(PORT_mAlt3); //Alt3
+	port->PCR[UART_RX_PIN] = (uint32_t)0; //clear
+	port->PCR[UART_RX_PIN] = PORT_PCR_MUX(PORT_mAlt3); //Alt3
+	port->PCR[UART_TX_PIN] = (uint32_t)0; //clear
+	port->PCR[UART_TX_PIN] = PORT_PCR_MUX(PORT_mAlt3); //Alt3
 
 	// creo los buffers
 		for(int id=0; id<UART_CANT_IDS; id++){
@@ -118,7 +114,7 @@ uint8_t uartGetRxMsgLength(uint8_t id){
 uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant){
 
 
-	if (rx[id].read == false) {
+	if (rx[id].done == false) {
 			return 0;
 		}
 
@@ -149,7 +145,7 @@ uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant){
 uint8_t uartWriteMsg(uint8_t id, const char* msg, uint8_t cant){
 
 
-	uint32_t len = rx[id].len;
+	uint32_t len = tx[id].len;
 	for(uint16_t i=0; i < cant && i<len;i++){
 		*tx[id].buffer_ptr = msg[i];
 		tx[id].buffer_ptr++;
@@ -158,7 +154,7 @@ uint8_t uartWriteMsg(uint8_t id, const char* msg, uint8_t cant){
 			tx[id].buffer_ptr = tx[id].buffer;
 		}
 	}
-
+	return tx[id].done;
 
 }
 
@@ -201,7 +197,7 @@ void UART_SetBaudRate (UART_Type *uart, uint32_t baudrate)
 
 void UARTX_IRQ_HANDLER(uint8_t id){
 
-	UART_Type* const uart_p = PORT_PTRS[id];
+	UART_Type* const uart_p = UART_POINTERS[id];
 
 	//interrupcion fue por el transmisor
 	if ((uart_p->S1 & UART_S1_TDRE_MASK) == UART_S1_TDRE_MASK ) {
@@ -211,16 +207,16 @@ void UARTX_IRQ_HANDLER(uint8_t id){
 	//interrupcion fue por el receptor
 	if ( (uart_p->S1 & UART_S1_RDRF_MASK) == UART_S1_RDRF_MASK ) {
 		// reading S1 with RDRF set and then reading D clears S1[RDRF]
-		*rx[id].buffer_ptr = UARTX->D; // Guardo el byte recibido
+		*rx[id].buffer_ptr = UART0->D; // Guardo el byte recibido
 		rx[id].buffer_ptr++;
 		rx[id].len = (rx[id].len + 1) % BUFFER_SIZE; //Buffer circular
 		if(rx[id].buffer_ptr - rx[id].buffer == BUFFER_SIZE){
 			rx[id].buffer_ptr = rx[id].buffer;
 		}
-		rx[id].read = true;
+		rx[id].done = true;
 		//UARTX->C2 &= ~UART_C2_RIE_MASK;
 	}
-
+}
 
 //Hago el control de interrupcinoes
 __ISR__ UART0_RX_TX_IRQHandler(void){
@@ -241,7 +237,3 @@ __ISR__ UART4_RX_TX_IRQHandler(void){
 __ISR__ UART5_RX_TX_IRQHandler(void){
 	UARTX_IRQ_HANDLER(5);
 }
-
-
-
-

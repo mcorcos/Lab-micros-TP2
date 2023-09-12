@@ -12,6 +12,7 @@
  ******************************************************************************/
 
 #include <stdint.h>
+#include "MCAL/IRQ.h"
 
 
 /*******************************************************************************
@@ -19,6 +20,12 @@
  ******************************************************************************/
 
 #define UART_CANT_IDS	5
+
+#define UART_HAL_DEFAULT_BAUDRATE 9600
+#define BUFFER_SIZE 32
+
+#define UART_RX_PIN	16 //Default 16 y 17
+#define UART_TX_PIN	17
 
 
 /*******************************************************************************
@@ -30,18 +37,7 @@ typedef struct {
 	bool parity;
 } uart_cfg_t;
 
-typedef enum
-{
-	PORT_mAnalog,
-	PORT_mGPIO,
-	PORT_mAlt2,
-	PORT_mAlt3,
-	PORT_mAlt4,
-	PORT_mAlt5,
-	PORT_mAlt6,
-	PORT_mAlt7,
 
-} PORTMux_t;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -95,6 +91,14 @@ uint8_t uartWriteMsg(uint8_t id, const char* msg, uint8_t cant);
  * @return All bytes were transfered
 */
 uint8_t uartIsTxMsgComplete(uint8_t id);
+
+/*
+__ISR__ UART0_RX_TX_IRQHandler(void);
+__ISR__ UART1_RX_TX_IRQHandler(void);
+__ISR__ UART2_RX_TX_IRQHandler(void);
+__ISR__ UART3_RX_TX_IRQHandler(void);
+__ISR__ UART4_RX_TX_IRQHandler(void);
+__ISR__ UART5_RX_TX_IRQHandler(void);*/
 
 
 /*******************************************************************************
