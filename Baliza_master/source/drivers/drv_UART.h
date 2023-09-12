@@ -5,25 +5,24 @@
  ******************************************************************************/
 
 
-#ifndef _UART_H_
-#define _UART_H_
+#ifndef _DRV_UART_H_
+#define _DRV_UART_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-#include "uart.h"
+#include "source/protocols/uart.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
- void initUART(uint9_t id, uart_cfg_t configure);
- package_t receivePackage(void);
- void sendPackage(package_t package);
-
+#define BAUDRATE_DEFAULT 9600
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-
+ typedef struct{
+ 	char data[1];
+ }package_t;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -31,9 +30,12 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
+ void initUART(uint8_t id, uart_cfg_t configure);
+ package_t receivePackage(void);
+ void sendPackage(package_t package);
 
 
-#endif // _UART_H_
+#endif // _DRV_UART_H_
 
 
 
