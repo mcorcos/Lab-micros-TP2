@@ -92,13 +92,13 @@ uint8_t uartWriteMsg(uint8_t id, const char* msg, uint8_t cant);
 */
 uint8_t uartIsTxMsgComplete(uint8_t id);
 
-/*
+
 __ISR__ UART0_RX_TX_IRQHandler(void);
 __ISR__ UART1_RX_TX_IRQHandler(void);
 __ISR__ UART2_RX_TX_IRQHandler(void);
 __ISR__ UART3_RX_TX_IRQHandler(void);
 __ISR__ UART4_RX_TX_IRQHandler(void);
-__ISR__ UART5_RX_TX_IRQHandler(void);*/
+__ISR__ UART5_RX_TX_IRQHandler(void);
 
 
 /*******************************************************************************
