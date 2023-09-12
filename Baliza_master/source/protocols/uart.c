@@ -1,9 +1,8 @@
 /***************************************************************************//**
-  @file     board.h
-  @brief    Board management
+  @file     uart.c
+  @brief    UART driver
   @author   G4
  ******************************************************************************/
-
 
 
 /*******************************************************************************
@@ -13,6 +12,7 @@
 #include "MCAL/gpio.h"
 #include "protocols/uart.h"
 #include "hardware.h"
+#include "MK64F12.h" //Tiene el typedef UART_Type
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -47,8 +47,20 @@ static PORT_Type* PORT_PTRS[] =  { PORTC, PORTC, PORTC, PORTC, PORTC , PORTC };
 static buffer_t rx[];
 static buffer_t tx[];
 
+
 /*******************************************************************************
- * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
+ *  FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
+ ******************************************************************************/
+/**
+ * @brief Sets UART BaudRate.
+ * @param uart pointer to uart structure to set baudrate.
+ * @param baudrate chosen baudrate to set.
+ * @return void.
+ */
+void UART_SetBaudRate(UART_Type *uart, uint32_t baudrate);
+
+/*******************************************************************************
+ *  GLOBAL FUNCTIONS DEFINITIONS
  ******************************************************************************/
 void uartInit (uint8_t id = 3, uart_cfg_t config = UART_HAL_DEFAULT_BAUDRATE){
 
