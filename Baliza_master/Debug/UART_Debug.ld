@@ -5,7 +5,7 @@
  * Generated linker script file for MK64FN1M0xxx12
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.23
- * MCUXpresso IDE v10.2.0 [Build 759] [2018-05-15]  on Sep 11, 2023 9:08:53 PM
+ * MCUXpresso IDE v10.2.0 [Build 759] [2018-05-15]  on Sep 13, 2023 1:50:15 PM
  */
 
 INCLUDE "UART_Debug_library.ld"

@@ -18,7 +18,7 @@
 
 #define DEFAULT_ID 0
 
-#define SIZE_OF_PACKAGE 1
+#define SIZE_OF_PACKAGE 2
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -31,7 +31,9 @@
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
- void initUART(uint8_t id, uart_cfg_t configure){
+ void initUART(void){
+	 uint8_t id = DEFAULT_ID;
+	 uart_cfg_t configure = {.baudrate = UART_HAL_DEFAULT_BAUDRATE};
 	 uartInit(id, configure);
  }
 
@@ -39,7 +41,7 @@
 	 package_t package;
 	 if(uartIsRxMsg(DEFAULT_ID)){
 		 if(uartGetRxMsgLength(DEFAULT_ID) >= SIZE_OF_PACKAGE  ){
-			 uartReadMsg(DEFAULT_ID,package.data, SIZE_OF_PACKAGE);
+			 uartReadMsg(DEFAULT_ID,package.dataType, SIZE_OF_PACKAGE);
 		 }
 	 }
 	 return package;
@@ -48,7 +50,7 @@
 
  void sendPackage(package_t package){
 	 if(uartIsTxMsgComplete(DEFAULT_ID)){
-		 uartWriteMsg(DEFAULT_ID, package.data, SIZE_OF_PACKAGE);
+		 uartWriteMsg(DEFAULT_ID, package.dataType, SIZE_OF_PACKAGE);
 	 }
 	 else{
 

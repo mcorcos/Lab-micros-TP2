@@ -17,12 +17,18 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 #define BAUDRATE_DEFAULT 9600
+#define DATA_TYPE_SIZE 1
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
- typedef struct{
- 	char data[1];
+
+typedef struct{
+ 	char dataType[DATA_TYPE_SIZE]; // el identificador
+ 	uint8_t value; // el valor
+
  }package_t;
+
+
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -30,7 +36,7 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
- void initUART(uint8_t id, uart_cfg_t configure);
+ void initUART(void);
  package_t receivePackage(void);
  void sendPackage(package_t package);
 

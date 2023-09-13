@@ -16,4 +16,9 @@ C_DEPS :=
 SUBDIRS := \
 SDK/CMSIS \
 SDK/startup \
+source \
+source/MCAL \
+source/drivers \
+source/protocols \
+source/timers \
 
