@@ -72,6 +72,63 @@ Discarded input sections
  .debug_macro   0x00000000       0x10 ./source/timers/timer.o
  .debug_macro   0x00000000     0x122b ./source/timers/timer.o
  .debug_macro   0x00000000       0x16 ./source/timers/timer.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .group         0x00000000        0xc ./source/protocols/CAN.o
+ .text          0x00000000        0x0 ./source/protocols/CAN.o
+ .data          0x00000000        0x0 ./source/protocols/CAN.o
+ .bss           0x00000000        0x0 ./source/protocols/CAN.o
+ .rodata        0x00000000       0x14 ./source/protocols/CAN.o
+ .text.initCAN  0x00000000      0x114 ./source/protocols/CAN.o
+ .text.enableCAN
+                0x00000000       0x2c ./source/protocols/CAN.o
+ .text.disableCAN
+                0x00000000       0x30 ./source/protocols/CAN.o
+ .text.configureCANClock
+                0x00000000       0x38 ./source/protocols/CAN.o
+ .text.defaultCANConfig
+                0x00000000       0x3c ./source/protocols/CAN.o
+ .text.configureIndivRxMask
+                0x00000000       0x20 ./source/protocols/CAN.o
+ .debug_info    0x00000000      0x71d ./source/protocols/CAN.o
+ .debug_abbrev  0x00000000      0x1c2 ./source/protocols/CAN.o
+ .debug_aranges
+                0x00000000       0x48 ./source/protocols/CAN.o
+ .debug_ranges  0x00000000       0x38 ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0xcc ./source/protocols/CAN.o
+ .debug_macro   0x00000000      0xa5a ./source/protocols/CAN.o
+ .debug_macro   0x00000000      0x34e ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x22 ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x5c ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x1c ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x22 ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0xdf ./source/protocols/CAN.o
+ .debug_macro   0x00000000      0xecf ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x48 ./source/protocols/CAN.o
+ .debug_macro   0x00000000     0xe07b ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x10 ./source/protocols/CAN.o
+ .debug_macro   0x00000000     0x122b ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x16 ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x46 ./source/protocols/CAN.o
+ .debug_macro   0x00000000       0x88 ./source/protocols/CAN.o
+ .debug_line    0x00000000      0x25d ./source/protocols/CAN.o
+ .debug_str     0x00000000    0x775be ./source/protocols/CAN.o
+ .comment       0x00000000       0x7f ./source/protocols/CAN.o
+ .debug_frame   0x00000000       0xe8 ./source/protocols/CAN.o
+ .ARM.attributes
+                0x00000000       0x39 ./source/protocols/CAN.o
  .group         0x00000000        0xc ./source/protocols/uart.o
  .group         0x00000000        0xc ./source/protocols/uart.o
  .group         0x00000000        0xc ./source/protocols/uart.o
@@ -109,6 +166,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x10 ./source/protocols/uart.o
  .debug_macro   0x00000000     0x122b ./source/protocols/uart.o
  .debug_macro   0x00000000       0x16 ./source/protocols/uart.o
+ .debug_macro   0x00000000       0x46 ./source/protocols/uart.o
  .group         0x00000000        0xc ./source/drivers/drv_DEVBOARD.o
  .group         0x00000000        0xc ./source/drivers/drv_DEVBOARD.o
  .group         0x00000000        0xc ./source/drivers/drv_DEVBOARD.o
@@ -141,6 +199,7 @@ Discarded input sections
  .debug_macro   0x00000000     0x122b ./source/drivers/drv_DEVBOARD.o
  .debug_macro   0x00000000       0x16 ./source/drivers/drv_DEVBOARD.o
  .debug_macro   0x00000000       0x46 ./source/drivers/drv_DEVBOARD.o
+ .debug_macro   0x00000000       0x88 ./source/drivers/drv_DEVBOARD.o
  .group         0x00000000        0xc ./source/drivers/drv_K64.o
  .group         0x00000000        0xc ./source/drivers/drv_K64.o
  .group         0x00000000        0xc ./source/drivers/drv_K64.o
@@ -191,7 +250,7 @@ Discarded input sections
  .debug_macro   0x00000000     0x122b ./source/drivers/drv_K64.o
  .debug_macro   0x00000000       0x16 ./source/drivers/drv_K64.o
  .debug_macro   0x00000000       0x46 ./source/drivers/drv_K64.o
- .debug_macro   0x00000000       0x70 ./source/drivers/drv_K64.o
+ .debug_macro   0x00000000       0x88 ./source/drivers/drv_K64.o
  .group         0x00000000        0xc ./source/drivers/drv_UART.o
  .group         0x00000000        0xc ./source/drivers/drv_UART.o
  .group         0x00000000        0xc ./source/drivers/drv_UART.o
@@ -351,7 +410,7 @@ Discarded input sections
  .debug_macro   0x00000000     0x122b ./source/App.o
  .debug_macro   0x00000000       0x16 ./source/App.o
  .debug_macro   0x00000000       0x46 ./source/App.o
- .debug_macro   0x00000000       0x70 ./source/App.o
+ .debug_macro   0x00000000       0x88 ./source/App.o
  .debug_macro   0x00000000       0x17 ./source/App.o
  .debug_macro   0x00000000       0x22 ./source/App.o
  .debug_macro   0x00000000       0x52 ./source/App.o
@@ -505,6 +564,7 @@ Linker script and memory map
 
 LOAD ./source/timers/SysTick.o
 LOAD ./source/timers/timer.o
+LOAD ./source/protocols/CAN.o
 LOAD ./source/protocols/uart.o
 LOAD ./source/drivers/drv_DEVBOARD.o
 LOAD ./source/drivers/drv_K64.o
@@ -1291,7 +1351,7 @@ OUTPUT(UART.axf elf32-littlearm)
  .debug_ranges  0x00000268      0x320 ./SDK/startup/startup_mk64f12.o
  .debug_ranges  0x00000588       0x20 ./SDK/CMSIS/system_MK64F12.o
 
-.debug_macro    0x00000000    0x12b1a
+.debug_macro    0x00000000    0x12a64
  .debug_macro   0x00000000       0xbc ./source/timers/SysTick.o
  .debug_macro   0x000000bc      0xa5a ./source/timers/SysTick.o
  .debug_macro   0x00000b16       0x22 ./source/timers/SysTick.o
@@ -1328,23 +1388,21 @@ OUTPUT(UART.axf elf32-littlearm)
  .debug_macro   0x00011d5a       0x28 ./source/timers/timer.o
  .debug_macro   0x00011d82       0xd9 ./source/timers/timer.o
  .debug_macro   0x00011e5b       0xc2 ./source/protocols/uart.o
- .debug_macro   0x00011f1d       0x46 ./source/protocols/uart.o
- .debug_macro   0x00011f63       0x22 ./source/protocols/uart.o
- .debug_macro   0x00011f85       0xcc ./source/drivers/drv_DEVBOARD.o
- .debug_macro   0x00012051       0x70 ./source/drivers/drv_DEVBOARD.o
- .debug_macro   0x000120c1       0xc2 ./source/drivers/drv_K64.o
- .debug_macro   0x00012183       0xd9 ./source/drivers/drv_UART.o
- .debug_macro   0x0001225c       0x1c ./source/drivers/drv_UART.o
- .debug_macro   0x00012278       0x10 ./source/drivers/drv_UART.o
- .debug_macro   0x00012288       0xb3 ./source/MCAL/IRQ.o
- .debug_macro   0x0001233b       0xaf ./source/MCAL/gpio.o
- .debug_macro   0x000123ea      0x214 ./source/App.o
- .debug_macro   0x000125fe      0x32a ./source/App.o
- .debug_macro   0x00012928       0x9c ./SDK/startup/hardware.o
- .debug_macro   0x000129c4       0x9c ./SDK/startup/main.o
- .debug_macro   0x00012a60       0x11 ./SDK/startup/semihost_hardfault.o
- .debug_macro   0x00012a71       0x29 ./SDK/startup/startup_mk64f12.o
- .debug_macro   0x00012a9a       0x80 ./SDK/CMSIS/system_MK64F12.o
+ .debug_macro   0x00011f1d       0x22 ./source/protocols/uart.o
+ .debug_macro   0x00011f3f       0xcc ./source/drivers/drv_DEVBOARD.o
+ .debug_macro   0x0001200b       0xc2 ./source/drivers/drv_K64.o
+ .debug_macro   0x000120cd       0xd9 ./source/drivers/drv_UART.o
+ .debug_macro   0x000121a6       0x1c ./source/drivers/drv_UART.o
+ .debug_macro   0x000121c2       0x10 ./source/drivers/drv_UART.o
+ .debug_macro   0x000121d2       0xb3 ./source/MCAL/IRQ.o
+ .debug_macro   0x00012285       0xaf ./source/MCAL/gpio.o
+ .debug_macro   0x00012334      0x214 ./source/App.o
+ .debug_macro   0x00012548      0x32a ./source/App.o
+ .debug_macro   0x00012872       0x9c ./SDK/startup/hardware.o
+ .debug_macro   0x0001290e       0x9c ./SDK/startup/main.o
+ .debug_macro   0x000129aa       0x11 ./SDK/startup/semihost_hardfault.o
+ .debug_macro   0x000129bb       0x29 ./SDK/startup/startup_mk64f12.o
+ .debug_macro   0x000129e4       0x80 ./SDK/CMSIS/system_MK64F12.o
 
 .debug_line     0x00000000     0x2454
  .debug_line    0x00000000      0x1b0 ./source/timers/SysTick.o
@@ -1362,34 +1420,34 @@ OUTPUT(UART.axf elf32-littlearm)
  .debug_line    0x00001bb5      0x6d8 ./SDK/startup/startup_mk64f12.o
  .debug_line    0x0000228d      0x1c7 ./SDK/CMSIS/system_MK64F12.o
 
-.debug_str      0x00000000    0x7bd84
+.debug_str      0x00000000    0x7bdee
  .debug_str     0x00000000    0x76f36 ./source/timers/SysTick.o
                               0x770b4 (size before relaxing)
  .debug_str     0x00076f36     0x3536 ./source/timers/timer.o
                               0x7a5fb (size before relaxing)
  .debug_str     0x0007a46c      0x9c5 ./source/protocols/uart.o
                               0x779e1 (size before relaxing)
- .debug_str     0x0007ae31      0x21c ./source/drivers/drv_DEVBOARD.o
-                              0x772aa (size before relaxing)
- .debug_str     0x0007b04d       0xb3 ./source/drivers/drv_K64.o
-                              0x7731c (size before relaxing)
- .debug_str     0x0007b100       0xba ./source/drivers/drv_UART.o
+ .debug_str     0x0007ae31      0x286 ./source/drivers/drv_DEVBOARD.o
+                              0x77314 (size before relaxing)
+ .debug_str     0x0007b0b7       0xb3 ./source/drivers/drv_K64.o
+                              0x77386 (size before relaxing)
+ .debug_str     0x0007b16a       0xba ./source/drivers/drv_UART.o
                               0x77174 (size before relaxing)
- .debug_str     0x0007b1ba       0x9a ./source/MCAL/IRQ.o
+ .debug_str     0x0007b224       0x9a ./source/MCAL/IRQ.o
                               0x77129 (size before relaxing)
- .debug_str     0x0007b254       0x9b ./source/MCAL/gpio.o
+ .debug_str     0x0007b2be       0x9b ./source/MCAL/gpio.o
                               0x777ff (size before relaxing)
- .debug_str     0x0007b2ef      0x128 ./source/App.o
-                              0x7a985 (size before relaxing)
- .debug_str     0x0007b417      0x16f ./SDK/startup/hardware.o
+ .debug_str     0x0007b359      0x128 ./source/App.o
+                              0x7a9ef (size before relaxing)
+ .debug_str     0x0007b481      0x16f ./SDK/startup/hardware.o
                               0x771f8 (size before relaxing)
- .debug_str     0x0007b586       0x1b ./SDK/startup/main.o
+ .debug_str     0x0007b5f0       0x1b ./SDK/startup/main.o
                               0x76fcc (size before relaxing)
- .debug_str     0x0007b5a1       0x36 ./SDK/startup/semihost_hardfault.o
+ .debug_str     0x0007b60b       0x36 ./SDK/startup/semihost_hardfault.o
                                0x2d32 (size before relaxing)
- .debug_str     0x0007b5d7      0x74b ./SDK/startup/startup_mk64f12.o
+ .debug_str     0x0007b641      0x74b ./SDK/startup/startup_mk64f12.o
                                0x35a0 (size before relaxing)
- .debug_str     0x0007bd22       0x62 ./SDK/CMSIS/system_MK64F12.o
+ .debug_str     0x0007bd8c       0x62 ./SDK/CMSIS/system_MK64F12.o
                               0x77107 (size before relaxing)
 
 .comment        0x00000000       0x7e
