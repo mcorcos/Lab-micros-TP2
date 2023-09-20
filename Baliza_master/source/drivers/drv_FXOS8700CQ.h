@@ -2,63 +2,44 @@
   @file     board.h
   @brief    Board management
   @author   G4
-  @date 	Sep 14, 2023
+  @date 	Sep 18, 2023
  
  ******************************************************************************/
 
-#ifndef PROTOCOLS_CAN_H_
-#define PROTOCOLS_CAN_H_
+#ifndef DRIVERS_DRV_FXOS8700CQ_H_
+#define DRIVERS_DRV_FXOS8700CQ_H_
 
-
-
- /**
-  * @brief CAN driver
-  * FREEDOM k64 CAN driver.Uses CAN0
-
- */
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-
+#include "timers\timer.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
-
-
- typedef enum{
-	 CAN_READY,
-	 CAN_ERR
-
- }CAN_STATUS;
  
- typedef struct{
-	uint8_t PRESDIV;
-	uint8_t PROPSEG;
-	uint8_t PSEG1;
-	uint8_t PSEG2;
+ 
 
- }canTiming_t;
-
- typedef struct{
-	uint8_t clock;
-	uint32_t baudrate;
-	canTiming_t timing;
-
- }canConfig_t;
-
-
-
-
- typedef enum{
-	 CAN_OSC_CLOCK = 0,
-	 CAN_PERIPHERAL_CLOCK = 1
- }CAN_CLOCKS;
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+typedef uint8_t I2CBYTE;
 
+typedef enum{
+	WORKING,
+	FINISHED,
+	I2C_READ,
+	I2C_WRITE
+}I2C_COM_CONTROL;
+
+typedef enum{
+	SENSOR_ERROR,
+	SENSOR_READY,
+	SENSOR_OK,
+	SENSOR_INITIALIZED,
+	SENSOR_NOT_INITIALIZED,
+}SENSOR_CONTROL;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -67,36 +48,14 @@
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
- /**
-  * @brief Initialize CAN driver
-  * @param configuration of CAN
-  * @param Clock source to use
-  * @return Status of CAN
- */
- CAN_STATUS initCAN( canConfig_t * config);
 
-
- /**
-  * @brief Enable CAN
-  *
-  */
- void enableCAN();
-
- /**
-  * @brief Disable CAN
-  *
-  */
- void disableCAN();
+void initSensor(void);
+SENSOR_CONTROL configSensor(void);
 
 
 
 
- /**
-  * @brief transmit CAN Message Buffer
-  *
-  */
- void transmitCan();
+
 
  
- 
-#endif /*  PROTOCOLS_CAN_H_ */
+#endif /*  DRIVERS_DRV_FXOS8700CQ_H_ */

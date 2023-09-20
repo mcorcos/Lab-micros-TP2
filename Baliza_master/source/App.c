@@ -53,13 +53,20 @@ typedef struct{
  *******************************************************************************
  ******************************************************************************/
 
+//Timers para UART. Para transmitir parte del mensaje cada X ms
+//Para chequear si se ingreso algo por teclado.
 static tim_id_t timerTx;
 static tim_id_t timerRx;
 
+
+//Dispositives es el arreglo de informacion donde se guarda la info de las placas, y el mismo se manda a la cpu por medio de msg4CPU
+//Buffer es el arreglo donde guardo la informacion proviniente de CAN y de Acc y magnetometro
 static dispositive_t dispositives[CANT_DISP];
 static dispositive_t buffer[CANT_DISP];
 
-static package_t message4CPU[CANT_DISP][CANT_PACKAGE];
+
+//Mensaje que se envia a la computadora por UART
+static package_t message4CPU[CANT_DISP][CANT_PACKAGE+1]; // +1 its used to add '/n'
 static package_t * messagePointer = &(message4CPU[0][0]);
 
 
@@ -98,11 +105,11 @@ void App_Init (void)
 	timerRx = timerGetId();
 
 
-    timerStart(timerTx, TIMER_MS2TICKS(TIMER_TX_MS), TIM_MODE_PERIODIC, callbackTimerTx);
+    timerStart(timerTx, TIMER_MS2TICKS(TIMER_TX_MS), TIM_MODE_PERIODIC, callbackTimerTx); //info para los timers
     timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
 
-    initDispositives();
-    initBuffer();
+    initDispositives(); //init a la info de las placas
+    initBuffer(); // init para los buffers con valor dummy
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
@@ -123,7 +130,7 @@ void App_Run (void)
  ******************************************************************************/
 
 
-void updateDispositives(void){
+void updateDispositives(void){  //Actualizo la informacion de los buffers hacia el
 	for(uint8_t i=0; i < CANT_DISP ; i++){
 		dispositives[i].rolling = buffer[i].rolling;
 		dispositives[i].tilt = buffer[i].tilt;
@@ -135,55 +142,63 @@ void updateDispositives(void){
 void updateMessage4CPU(uint8_t i){
 	message4CPU[i][0].dataType[0] = 'I';//poner el ID
 	message4CPU[i][0].value = i+'0'; //poner el value
-	if(buffer[i].rolling >= 0){
+
+	if(dispositives[i].rolling >= 0){
 		message4CPU[i][1].dataType[0] = '+';//poner el + o -
-		message4CPU[i][1].value = buffer[i].rolling;
+		message4CPU[i][1].value = dispositives[i].rolling;
 	}
 	else{
 		message4CPU[i][1].dataType[0] = '-';//poner el + o -
-		message4CPU[i][1].value = (-1) * buffer[i].rolling;
+		message4CPU[i][1].value = (-1) * dispositives[i].rolling;
 	}
-	if(buffer[i].tilt >= 0){
+
+	if(dispositives[i].tilt >= 0){
 		message4CPU[i][2].dataType[0] = '+';//poner el + o -
-		message4CPU[i][2].value = buffer[i].tilt;
+		message4CPU[i][2].value = dispositives[i].tilt;
 	}
 	else{
 		message4CPU[i][2].dataType[0] = '-';//poner el + o -
-		message4CPU[i][2].value = (-1) * buffer[i].tilt;
+		message4CPU[i][2].value = (-1) * dispositives[i].tilt;
 	}
-	if(buffer[i].orientation >= 0){
+
+	if(dispositives[i].orientation >= 0){
 		message4CPU[i][3].dataType[0] = '+';//poner el + o -
-		message4CPU[i][3].value = buffer[i].orientation;
+		message4CPU[i][3].value = dispositives[i].orientation;
 	}
 	else{
 		message4CPU[i][3].dataType[0] = '-';//poner el + o -
-		message4CPU[i][3].value = (-1) * buffer[i].orientation;
+		message4CPU[i][3].value = (-1) * dispositives[i].orientation;
 	}
+
+	message4CPU[i][4].dataType[0] = 'T'; // T de terminador
+	message4CPU[i][4].value = '\n'; // Pongo el terminador para que la aplicacion sepa que termino el msg !
 }
 
 void initDispositives(void){ // inicio los ids  de los dispositives
 	for(uint8_t i=0;i<CANT_DISP;i++){
-		dispositives[i].id = i + '0';
+		dispositives[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
 	}
 }
 
 void initBuffer(void){
 	for(uint8_t i=0;i<CANT_DISP;i++){
-		buffer[i].id = i + '0';
-		buffer[i].rolling='A';
-		buffer[i].tilt='B';
-		buffer[i].orientation='C';
+		buffer[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
+		buffer[i].rolling = 'A'; //Dummy letter para chequear que funciona
+		buffer[i].tilt = 'B';
+		buffer[i].orientation = 'C';
 	}
 }
 
 
 void callbackTimerTx(void){ //callback para transmision de datos por UART
 
-	sendPackage(*(messagePointer++) ); //manda el siguiente paquete
 
-	if(messagePointer == &message4CPU[CANT_DISP-1][CANT_PACKAGE-1]){ // SI SE TERMINA EL ARREGLO QUE VUELVA AL PRINCIPIO
-		messagePointer = &message4CPU[0][0];
+
+
+	if(messagePointer == &message4CPU[CANT_DISP-1][CANT_PACKAGE+1]){ // SI SE TERMINA EL ARREGLO QUE VUELVA AL PRINCIPIO
+		messagePointer = &message4CPU[0][0];						// es 5 el limite para que se pueda imprimir la direccion 4
 	}
+	sendPackage(*(messagePointer++) ); //manda el siguiente paquete
 }
 
 

@@ -196,7 +196,7 @@
 									<listOptionValue builtIn="false" value="-print-memory-usage"/>
 									<listOptionValue builtIn="false" value="--sort-section=alignment"/>
 								</option>
-								<option id="gnu.c.link.option.userobjs.153379067" name="Other objects" superClass="gnu.c.link.option.userobjs" useByScannerDiscovery="false" valueType="userObjs"/>
+								<option id="gnu.c.link.option.userobjs.153379067" name="Other objects" superClass="gnu.c.link.option.userobjs" useByScannerDiscovery="false"/>
 								<option id="gnu.c.link.option.shared.693549962" name="Shared (-shared)" superClass="gnu.c.link.option.shared" useByScannerDiscovery="false"/>
 								<option id="gnu.c.link.option.soname.232886771" name="Shared object name (-Wl,-soname=)" superClass="gnu.c.link.option.soname" useByScannerDiscovery="false"/>
 								<option id="gnu.c.link.option.implname.665869694" name="Import Library name (-Wl,--out-implib=)" superClass="gnu.c.link.option.implname" useByScannerDiscovery="false"/>

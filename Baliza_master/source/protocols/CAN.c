@@ -117,3 +117,46 @@ void configureIndivRxMask(void){
 	// TODO se podria agregar otro control de datos recibidos.
 	CAN0->MCR |= CAN_MCR_IRMQ_MASK; // USO MB con mascaras que me da el micro
 }
+
+
+
+void transmitCan(){
+
+
+
+
+
+	//Check whether the respective interrupt bit is set and clear it.
+
+	// 49.3.10 Interrupt Masks 1 register (CANx_IMASK1)
+	// 	This register allows any number of a range of the 32 Message Buffer Interrupts to be
+	// 	enabled or disabled for MB31 to MB0. It contains one interrupt mask bit per buffer,
+	// 	enabling the CPU to determine which buffer generates an interrupt after a successful
+	// 	transmission or reception, that is, when the corresponding IFLAG1 bit is set.
+
+	// 49.3.11 Interrupt Flags 1 register (CANx_IFLAG1)
+	// 	This register defines the flags for the 32 Message Buffer interrupts for MB31 to MB0. It
+	// 	contains one interrupt flag bit per buffer. Each successful transmission or reception sets
+	// 	the corresponding IFLAG1 bit. If the corresponding IMASK1 bit is set, an interrupt will
+	// 	be generated. The interrupt flag must be cleared by writing 1 to it. Writing 0 has no
+	// 	effect.
+
+
+
+
+	// 2. If the MB is active (transmission pending), write the ABORT code (0b1001) to the
+	// CODE field of the Control and Status word to request an abortion of the
+	// transmission. Wait for the corresponding IFLAG to be asserted by polling the IFLAG
+	// register or by the interrupt request if enabled by the respective IMASK. Then read
+	// back the CODE field to check if the transmission was aborted or transmitted (see
+	// Transmission abort mechanism).
+
+	// 3. Write the ID word.
+	// 4. Write the data bytes.
+	// 5. Write the DLC, Control, and CODE fields of the Control and Status word to activate
+	// the MB.
+}
+
+
+
+

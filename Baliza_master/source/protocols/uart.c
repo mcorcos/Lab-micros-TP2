@@ -62,7 +62,7 @@ void uartInit (uint8_t id , uart_cfg_t config){
 
 	PORT_Type* const port = PORT_PTRS[id];
 	UART_Type* const uart_p = UART_POINTERS[id] ;
-	SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
+	SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK; //
 	//Clock Gating
 	if((id >= 0) && (id<UART_CANT_IDS)){
 		if(id<4){
