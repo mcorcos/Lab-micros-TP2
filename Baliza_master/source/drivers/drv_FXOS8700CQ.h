@@ -14,6 +14,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "timers\timer.h"
+#include "protocols\I2C.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -24,13 +25,10 @@
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-typedef uint8_t I2CBYTE;
 
 typedef enum{
 	WORKING,
 	FINISHED,
-	I2C_READ,
-	I2C_WRITE
 }I2C_COM_CONTROL;
 
 typedef enum{

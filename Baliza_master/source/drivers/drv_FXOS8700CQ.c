@@ -40,6 +40,7 @@
  ******************************************************************************/
 #include <stdint.h>
 #include "drv_FXOS8700CQ.h"
+
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
@@ -119,7 +120,7 @@ SENSOR_CONTROL configSensor(void){
 	I2CBYTE databyte;
 
     // read and check the FXOS8700CQ WHOAMI register
-    // 				slave address to write , slave intern register to W or R ,  , READ/WRITE , Ptr to Fun
+    // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
     i2cCommunication(FXOS8700CQ_SLAVE_ADDR,FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ,callbackIsFinished);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
@@ -192,8 +193,9 @@ SENSOR_CONTROL configSensor(void){
 
 
 void callreadDataFromSensorback(void){
+					// la di4reccion del esclavo , la direccion de memoria a la cual leer o escribir, el tamanio del arreglo a leer o escribir, el modo de i2c , y la funcion a llamarse
+	i2cCommunication(FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_STATUS, buffer,FXOS8700CQ_READ_LEN, I2C_READ, callbackRead); // llamo a la funcion de i2cComm
 
-	i2cCommunication(FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_STATUS, buffer,FXOS8700CQ_READ_LEN, I2C_READ, callbackRead);
 }
 
 
