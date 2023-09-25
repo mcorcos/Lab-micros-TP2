@@ -29,10 +29,14 @@ typedef enum{ // Los codigos de cada MB. leer pagina 1432 para mas info
 	 ANSWER_RX  = 0b1010,
 	 BUSY_RX     = 0b0001
 }RX_CODE;
+
+typedef enum{
+	ACTIVE_TX = 0b1100
+}TX_CODES;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
- void configureCANClock(canConfig_t * config);
+void configureCANClock(canConfig_t * config);
  void defaultCANConfig(canConfig_t * config);
  void configureIndivRxMask(void);
 /*******************************************************************************
@@ -120,41 +124,22 @@ void configureIndivRxMask(void){
 
 
 
-void transmitCan(){
+void transmitCan(uint8_t MB_ID, uint8_t id, uint8_t buffer[],uint8_t cantBytes){
 
 
+	CAN0->MB[MB_ID].ID = CAN_ID_STD(id);
 
+	CAN0->MB[MB_ID].WORD0 = buffer[0]<<24;
+	CAN0->MB[MB_ID].WORD0 |=  buffer[1]<<16;
+	CAN0->MB[MB_ID].WORD0 |= buffer[2]<<8;
+	CAN0->MB[MB_ID].WORD0 |= buffer[3];
+	CAN0->MB[MB_ID].WORD1 |=	buffer[4]<<24;
+	CAN0->MB[MB_ID].WORD1 |= buffer[5]<<16;
+	CAN0->MB[MB_ID].WORD1 |= buffer[6]<<8;
+	CAN0->MB[MB_ID].WORD1 |= buffer[7];
 
-
-	//Check whether the respective interrupt bit is set and clear it.
-
-	// 49.3.10 Interrupt Masks 1 register (CANx_IMASK1)
-	// 	This register allows any number of a range of the 32 Message Buffer Interrupts to be
-	// 	enabled or disabled for MB31 to MB0. It contains one interrupt mask bit per buffer,
-	// 	enabling the CPU to determine which buffer generates an interrupt after a successful
-	// 	transmission or reception, that is, when the corresponding IFLAG1 bit is set.
-
-	// 49.3.11 Interrupt Flags 1 register (CANx_IFLAG1)
-	// 	This register defines the flags for the 32 Message Buffer interrupts for MB31 to MB0. It
-	// 	contains one interrupt flag bit per buffer. Each successful transmission or reception sets
-	// 	the corresponding IFLAG1 bit. If the corresponding IMASK1 bit is set, an interrupt will
-	// 	be generated. The interrupt flag must be cleared by writing 1 to it. Writing 0 has no
-	// 	effect.
-
-
-
-
-	// 2. If the MB is active (transmission pending), write the ABORT code (0b1001) to the
-	// CODE field of the Control and Status word to request an abortion of the
-	// transmission. Wait for the corresponding IFLAG to be asserted by polling the IFLAG
-	// register or by the interrupt request if enabled by the respective IMASK. Then read
-	// back the CODE field to check if the transmission was aborted or transmitted (see
-	// Transmission abort mechanism).
-
-	// 3. Write the ID word.
-	// 4. Write the data bytes.
-	// 5. Write the DLC, Control, and CODE fields of the Control and Status word to activate
-	// the MB.
+	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX);
+	CAN0->MB[MB_ID].CS |= CAN_CS_DLC(cantBytes);
 }
 
 

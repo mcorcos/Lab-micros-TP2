@@ -21,7 +21,6 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
@@ -95,7 +94,7 @@
   * @brief transmit CAN Message Buffer
   *
   */
- void transmitCan();
+ void transmitCan(uint8_t MB_ID, uint8_t id, uint8_t buffer[],uint8_t cantBytes);
 
  
  

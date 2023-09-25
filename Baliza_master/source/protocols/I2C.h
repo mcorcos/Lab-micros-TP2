@@ -24,10 +24,19 @@
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+typedef void (* ptrToFun)( void);
+typedef uint8_t I2CBYTE;
+
 typedef struct{
     int address;
     int acknowledge;
 }slave_t;
+
+typedef enum{
+	I2C_READ,
+	I2C_WRITE
+}I2C_MODE;
+
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -39,7 +48,7 @@ typedef struct{
  /**
   * @brief Initializer for the I2C.
   */
-void initI2C(void);
+void initI2C(uint8_t id);
 
  /**
   * @brief Read for I2C.

@@ -94,6 +94,12 @@ void writeI2C(int information){ //Puse int pero para poner algo :P
 
 }
 
+
+
+void i2cCommunication(uint8_t slave_adress,uint8_t slave_register,I2CBYTE * databyte,uint8_t len ,uint8_t mode , ptrToFun  callback_){
+
+}
+
  /*******************************************************************************
  * FUNCTION DEFINITIONS WITH LOCAL SCOPE
  ******************************************************************************/
