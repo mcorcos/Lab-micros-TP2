@@ -80,11 +80,10 @@ void initI2C(uint8_t id){
 	port->PCR[PIN_SCL] = 0x0; //clear
 	port->PCR[PIN_SCL] |= PORT_PCR_MUX(PORT_mAlt3); //Alt3
 
-	//Enable UART0 Xmiter and Rcvr
-	//uart_p->C2=UART_C2_TE_MASK | UART_C2_RE_MASK | UART_C2_RIE_MASK; //     transmiter full interrupt // receiver full interrupt //  receiver full interrupt
-	//Que hace nose
-	//uart_p->C5 &= ~UART_C5_TDMAS_MASK;
+}
 
+void initModuleI2C (int algo){
+	
 }
 
 int readI2C(void){
