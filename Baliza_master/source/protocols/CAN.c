@@ -15,30 +15,23 @@
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
- 
- 
+
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-typedef enum{ // Los codigos de cada MB. leer pagina 1432 para mas info
-	INACTIVE_RX = 0b0000,
-	 EMPTY_RX    = 0b0100,
-	 FULL_RX     = 0b0010,
-	 OVERRUN_RX  = 0b0011,
-	 ANSWER_RX  = 0b1010,
-	 BUSY_RX     = 0b0001
-}RX_CODE;
+typedef void (*ptrToFun)(canFrame_t frame);
 
-typedef enum{
-	ACTIVE_TX = 0b1100
-}TX_CODES;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 void configureCANClock(canConfig_t * config);
  void defaultCANConfig(canConfig_t * config);
  void configureIndivRxMask(void);
+
+
+ static ptrToFun callbacks[CAN_ID_COUNT];
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -72,6 +65,16 @@ void configureCANClock(canConfig_t * config);
 			CAN0->MB[i].ID = CAN_ID_STD(0); // id = 0
 			CAN0->RXIMR[i] = 0xFFFFFFFF; // Masks RESET
 		}
+
+
+		//Exit Freeze
+
+		CAN0->MCR &= ~CAN_MCR_HALT_MASK;
+		//esperar a que se freezee..
+		while((CAN0->MCR & CAN_MCR_FRZACK_MASK)==CAN_MCR_FRZACK_MASK);
+
+
+
 		return CAN_READY;
 }
 
@@ -92,12 +95,17 @@ void configureCANClock(canConfig_t * config);
  }
 
 
-
+ void enableCanInterrup( uint8_t mb_id, ptrToFun callback){
+ 	NVIC_EnableIRQ(CAN0_ORed_Message_buffer_IRQn);
+ 	CAN0->IMASK1 |= (1UL<<mb_id);
+ 	callbacks[mb_id] = callback;
+ }
 
 
 
 
  void configureCANClock(canConfig_t * config){
+
 	 if( config->clock == CAN_OSC_CLOCK){
 		 CAN0->CTRL1 = CAN_CTRL1_CLKSRC(0);
 	 }
@@ -117,31 +125,127 @@ void defaultCANConfig(canConfig_t * config){
 }
 
 
+/*
 void configureIndivRxMask(void){
 	// TODO se podria agregar otro control de datos recibidos.
 	CAN0->MCR |= CAN_MCR_IRMQ_MASK; // USO MB con mascaras que me da el micro
 }
+*/
+
+void  configRxMB( uint8_t mb_id, uint32_t ID){
+	/// inactivate Mailbox
+	CAN0->MB[mb_id].CS = ( CAN0->MB[mb_id].CS &= ~CAN_CS_CODE_MASK ) | CAN_CS_CODE(INACTIVE_RX);
+
+	///Pongo el ID
+	CAN0->MB[mb_id].ID = CAN_ID_STD(ID);
+
+	/// Write the EMPTY code to the CODE field of the Control and Status word to activate the Mailbox.
+	CAN0->MB[mb_id].CS = CAN_CS_CODE(EMPTY_RX) | CAN_CS_IDE(0);
+}
+
+uint8_t transmitCan(uint8_t MB_ID,canFrame_t frame){
 
 
+	/// check if IFLAG its asserted and write 1 to clear it
+	if(CAN0->IFLAG1& (1<<MB_ID))
+		CAN0->IFLAG1 |= (1<<MB_ID);
 
-void transmitCan(uint8_t MB_ID, uint8_t id, uint8_t buffer[],uint8_t cantBytes){
+
+	//write ID
+	CAN0->MB[MB_ID].ID = CAN_ID_STD(frame.ID);
+
+	/// Write INACTIVE
+	CAN0->MB[MB_ID].CS = CAN_CS_CODE(INACTIVE_TX);
+
+	// Write data bytes
+	CAN0->MB[MB_ID].WORD0 = CAN_WORD0_DATA_BYTE_0(frame.dataByte0) |
+	                    	CAN_WORD0_DATA_BYTE_1(frame.dataByte1) |
+	                    	CAN_WORD0_DATA_BYTE_2(frame.dataByte2) |
+	                    	CAN_WORD0_DATA_BYTE_3(frame.dataByte3);
+	CAN0->MB[MB_ID].WORD1 = CAN_WORD1_DATA_BYTE_4(frame.dataByte4) |
+	                        CAN_WORD1_DATA_BYTE_5(frame.dataByte5) |
+	                    	CAN_WORD1_DATA_BYTE_6(frame.dataByte6) |
+	                    	CAN_WORD1_DATA_BYTE_7(frame.dataByte7);
 
 
-	CAN0->MB[MB_ID].ID = CAN_ID_STD(id);
-
-	CAN0->MB[MB_ID].WORD0 = buffer[0]<<24;
-	CAN0->MB[MB_ID].WORD0 |=  buffer[1]<<16;
-	CAN0->MB[MB_ID].WORD0 |= buffer[2]<<8;
-	CAN0->MB[MB_ID].WORD0 |= buffer[3];
-	CAN0->MB[MB_ID].WORD1 |=	buffer[4]<<24;
-	CAN0->MB[MB_ID].WORD1 |= buffer[5]<<16;
-	CAN0->MB[MB_ID].WORD1 |= buffer[6]<<8;
-	CAN0->MB[MB_ID].WORD1 |= buffer[7];
-
+	//write code and length
 	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX);
-	CAN0->MB[MB_ID].CS |= CAN_CS_DLC(cantBytes);
+	CAN0->MB[MB_ID].CS |= CAN_CS_DLC(frame.length);
+
+	return TRANSMIT_OK;
+}
+
+
+STATUS_READ readCAN(uint8_t MB_ID, canFrame_t frame){
+
+	uint8_t return_value;
+
+	/// Check if the BUSY bit is 0
+	if(CAN0->MB[MB_ID].CS>>CAN_CS_CODE_SHIFT & BUSY_RX) //RXbusy es 1
+		return_value = READ_FAIL;
+
+	//SRV: Serviced MB. MB was read and unlocked by reading TIMER or other MB.
+	CAN0->TIMER;
+
+	//Check if mailbox its active
+
+	uint32_t code = (CAN0->MB[MB_ID].CS & CAN_CS_CODE_MASK)>>CAN_CS_CODE_SHIFT;
+	switch(code){
+
+		//Si esta full
+		case FULL_RX:
+			frame.ID = (CAN0->MB[MB_ID].ID & CAN_ID_STD_MASK)>>CAN_ID_STD_SHIFT;
+
+			frame.dataWord0 =  ((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_0_MASK)>>24)|
+								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_1_MASK)>>8)|
+								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_2_MASK)<<8)|
+								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_3_MASK)<<24);
+
+			frame.dataWord1 =  ((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_4_MASK)>>24)|
+								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_5_MASK)>>8)|
+								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_6_MASK)<<8)|
+								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_7_MASK)<<24);
+
+			frame.length = (CAN0->MB[MB_ID].CS & CAN_CS_DLC_MASK) >> CAN_CS_DLC_SHIFT;
+
+			// Write the EMPTY code (0b0100) to the CODE
+			CAN0->MB[MB_ID].CS = CAN_CS_CODE(EMPTY_RX);
+
+			return_value = READ_OK;
+			break;
+
+		case EMPTY_RX:
+			return_value = READ_FAIL;
+			break;
+	}
+
+	///IFLAG registers reset by writing 1
+	CAN0->IFLAG1 |= (1<<MB_ID);
+
+
+	return return_value;
+
 }
 
 
 
+
+
+void CAN0_ORed_Message_buffer_IRQHandler(void){
+
+	canFrame_t frame;
+
+
+	for(int i=0; i<CAN_ID_COUNT; i++)
+	{
+		if( CAN0->IFLAG1 & (1<<i) ) //Cuando exista una flag levantada , el numerode bit es cual id esta levantado
+		{
+			if(((CAN0->MB[i].CS&CAN_CS_CODE_MASK)>>CAN_CS_CODE_SHIFT)==FULL_RX) //Cuando un MB este lleno , descargalo
+			{
+				CAN_STATUS s = readCAN(i,frame);
+				callbacks[i](frame);
+			}
+		}
+	}
+}
 

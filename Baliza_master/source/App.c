@@ -12,11 +12,15 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
+#include <math.h>
+
 #include "MCAL/board.h"
 #include "timers/timer.h" // Llamo para Init timer
 #include "drivers/drv_DEVBOARD.h" // Placa creada por el grupo con leds para debuggin
 #include "drivers/drv_K64.h" // creamos funciones para acceder a switches y demas de la kinetis
 #include "drivers/drv_UART.h"
+#include "drivers/drv_FXOS8700CQ.h"
+#include "drivers/drv_CAN.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -52,6 +56,7 @@ typedef struct{
                         GLOBAL VARS DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
+static Measurement measurament;
 
 //Timers para UART. Para transmitir parte del mensaje cada X ms
 //Para chequear si se ingreso algo por teclado.
@@ -70,6 +75,8 @@ static package_t message4CPU[CANT_DISP][CANT_PACKAGE+1]; // +1 its used to add '
 static package_t * messagePointer = &(message4CPU[0][0]);
 
 
+
+
 /*******************************************************************************
  *******************************************************************************
                         LOCAL FUNCTION PROTOTYPES
@@ -83,7 +90,10 @@ void initDispositives(void);
 void updateDispositives(void);
 void updateMessage4CPU(uint8_t i);
 void initBuffer(void);
+Measurement normalize(rawdata_t accel,rawdata_t magnet);
 
+void receiveBoardsPos(void);
+void sendPos2Boards(void);
 /*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
@@ -117,6 +127,9 @@ void App_Run (void)
 {
 	// updateo las posiciones de mi placa y de las demas
 	updateDispositives();
+	receiveBoardsPos();
+	sendPos2Boards();
+
 
 
 
@@ -205,3 +218,46 @@ void callbackTimerTx(void){ //callback para transmision de datos por UART
 void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 }
+
+
+void receiveBoardsPos(void){
+	receiveCAN(measurament);
+	uint8_t id = measurament.boardID;
+
+	buffer[id].rolling = measurament.rolling;
+	buffer[id].tilt = measurament.tilt;
+	buffer[id].orientation = measurament.orientation;
+
+}
+void sendPos2Boards(void){
+
+	rawdata_t accel = getAccData();
+	rawdata_t magnet = getMagData();
+
+	measurament = normalize(accel , magnet);
+	sendCan(measurament);
+
+	//Updateo los datos de mi placa (Buffer[0])
+	buffer[0].rolling = measurament.rolling;
+	buffer[0].tilt = measurament.tilt;
+	buffer[0].orientation = measurament.orientation;
+}
+
+
+Measurement normalize(rawdata_t accel,rawdata_t magnet){
+	Measurement m;
+
+	float normalize = sqrt(accel.x*accel.x+accel.y*accel.y+accel.z*accel.z); // suma de los cuadrados. Modulo
+
+	accel.y/=normalize;
+	accel.x/=normalize;
+	accel.z/=normalize;
+
+	m.rolling=(int)((180/3.1415)*atan2(accel.y,sqrt(accel.x*accel.x+accel.z*accel.z)));//conversion de radianes a grados
+	m.tilt=(int)((180/3.1415)*atan2(accel.x,sqrt(accel.y*accel.y+accel.z*accel.z)));
+
+	return m;
+}
+
+
+

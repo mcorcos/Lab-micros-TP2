@@ -2,19 +2,18 @@
   @file     board.h
   @brief    Board management
   @author   G4
-  @date 	Sep 18, 2023
+  @date 	Sep 27, 2023
  
  ******************************************************************************/
 
-#ifndef DRIVERS_DRV_FXOS8700CQ_H_
-#define DRIVERS_DRV_FXOS8700CQ_H_
+#ifndef DRIVERS_DRV_CAN_H_
+#define DRIVERS_DRV_CAN_H_
 
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-#include "timers\timer.h"
-#include "protocols\I2C.h"
+#include "protocols/CAN.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -25,28 +24,13 @@
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-
-typedef enum{
-	WORKING,
-	FINISHED,
-}I2C_COM_CONTROL;
-
-typedef enum{
-	SENSOR_ERROR,
-	SENSOR_READY,
-	SENSOR_OK,
-	SENSOR_INITIALIZED,
-	SENSOR_NOT_INITIALIZED,
-}SENSOR_CONTROL;
-
-
-
-typedef struct{
-	uint16_t x;
-	int16_t y;
-	int16_t z;
-}rawdata_t;
-
+typedef struct
+{
+	uint16_t boardID;
+	uint8_t rolling;
+	uint8_t tilt;
+	uint8_t orientation;
+}Measurement;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -55,12 +39,8 @@ typedef struct{
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
-
-void initSensor(void);
-SENSOR_CONTROL configSensor(void);
-
-rawdata_t getMagData(void);
-rawdata_t getAccData(void);
-
+CAN_STATUS initBoardsCan(void);
+uint8_t receiveCAN(Measurement measurements);
+uint8_t sendCan(Measurement measurements);
  
-#endif /*  DRIVERS_DRV_FXOS8700CQ_H_ */
+#endif /*  DRIVERS_DRV_CAN_H_ */

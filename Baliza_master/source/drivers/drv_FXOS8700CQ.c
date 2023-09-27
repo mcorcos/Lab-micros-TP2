@@ -40,6 +40,7 @@
  ******************************************************************************/
 #include <stdint.h>
 #include "drv_FXOS8700CQ.h"
+#include "protocols/i2c.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -62,7 +63,9 @@
 // number of bytes to be read from the FXOS8700CQ
 #define FXOS8700CQ_READ_LEN 	13
 
-
+//Conversiones
+#define ACC_CONVERSION	(0.000488)		//G
+#define	MAG_CONVERSION	(0.1)		//uT
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -72,12 +75,6 @@
 
 
 
-
-typedef struct{
-	uint16_t x;
-	int16_t y;
-	int16_t z;
-}rawdata_t;
 
 
 typedef struct{
@@ -95,7 +92,7 @@ static I2CBYTE buffer[FXOS8700CQ_READ_LEN]; // read buffer
 
 void callbackIsFinished(void);
 SENSOR_CONTROL callbackRead(void);
-void readDataFromSensor(void);
+void callreadDataFromSensorback(void);
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -108,7 +105,7 @@ void initSensor(void){
 	//Create a timer
 	timerInit();
 	tim_id_t timer = timerGetId();
-	timerStart(timer, TIMER_MS2TICKS(200),TIM_MODE_PERIODIC,readDataFromSensor);
+	timerStart(timer, TIMER_MS2TICKS(200),TIM_MODE_PERIODIC,callreadDataFromSensorback);
 }
 
 
@@ -217,12 +214,12 @@ SENSOR_CONTROL callbackRead(void){ //Funcion llamada desde el i2cCommunications.
 		int16_t magnetYAxis = (buffer[9] << 8) | buffer[10];
 		int16_t magnetZAxis = (buffer[11] << 8) | buffer[12];
 
-		accelerometer.x =accelerometerXAxis; //cargo los datos raw en accel y magnet
-		accelerometer.y =accelerometerYAxis;
-		accelerometer.z =accelerometerZAxis;
-		magnet.x = magnetXAxis;
-		magnet.y = magnetYAxis;
-		magnet.z = magnetZAxis;
+		accelerometer.x =accelerometerXAxis*ACC_CONVERSION; //cargo los datos raw en accel y magnet
+		accelerometer.y =accelerometerYAxis*ACC_CONVERSION;
+		accelerometer.z =accelerometerZAxis*ACC_CONVERSION;
+		magnet.x = magnetXAxis*MAG_CONVERSION;
+		magnet.y = magnetYAxis*MAG_CONVERSION;
+		magnet.z = magnetZAxis*MAG_CONVERSION;
 
 		return SENSOR_OK; //devuelvo ok
 
@@ -232,4 +229,12 @@ SENSOR_CONTROL callbackRead(void){ //Funcion llamada desde el i2cCommunications.
 		return SENSOR_NOT_INITIALIZED; //devuelvo que aun no esta init
 
 	}
+}
+
+
+rawdata_t getMagData(void){
+	return magnet;
+}
+rawdata_t getAccData(void){
+	return accelerometer;
 }
