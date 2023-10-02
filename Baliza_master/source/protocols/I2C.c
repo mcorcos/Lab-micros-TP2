@@ -88,9 +88,9 @@ void initI2C(I2C_CONFIG * i2cConfig){
 
 	// Write I2C0 Control Register 1
 	I2C0->C1 = 0x00;
-	I2C0->C1 |= (I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK );	// enable i2c & i2c interrupts
+	I2C0->C1 |= (I2C_C1_IICEN_MASK | I2C_C1_IICEN_MASK);	// enable i2c & i2c interrupts
 
-
+	PORTE->PCR[PIN_SCL] = 0;
  	PORTE->PCR[PIN_SCL] &= ~PORT_PCR_MUX_MASK;
  	PORTE->PCR[PIN_SCL] |= PORT_PCR_MUX(PORT_mAlt5);
  	PORTE->PCR[PIN_SCL] |= (1<<PORT_PCR_ODE_SHIFT);
@@ -136,8 +136,8 @@ void i2cWriteAndRead(I2C_CONFIG  i2cConfig, I2C_MODE mode){
 	// si pude avanzar sin tener errores de i2c
 	while(i2cConfig.flag == FLAG_TRANSMISSION) //Mientras este en transmision
 	{
-		while(((I2C0->S & I2C_S_IICIF_MASK)>>I2C_S_IICIF_SHIFT)==0); //espero a tener una interrupcion
-		i2cCommunication(&i2cConfig); //mini fsm que lleva adelante la comunicacion
+		//while((I2C0->S & I2C_S_IICIF_MASK)==0); //espero a tener una interrupcion
+		//i2cCommunication(&i2cConfig); //mini fsm que lleva adelante la comunicacion
 	}
 	while(((I2C0->S & I2C_S_BUSY_MASK) != 0));		// espero hasta que este libre .si esta en 0 esta en idle . en 1 esta busy
 
@@ -191,7 +191,7 @@ void i2cCommunication(I2C_CONFIG * i2cConfig){ //Es la misma para leer y escribi
 							i2cConfig->state = I2C_STATE_RSTART;
 						}
 						else
-							i2cEndCommunication(i2cConfig,I2C_FAULT_NO_ACK);
+							i2cEndCommunication(i2cConfig,I2C_FAULT_NO_ACK); //Devuelve un bool?
 						break;
 					}
 					case I2C_STATE_RSTART:
@@ -213,7 +213,7 @@ void i2cCommunication(I2C_CONFIG * i2cConfig){ //Es la misma para leer y escribi
 							I2C0->C1 &= ~(1<<I2C_C1_TXAK_SHIFT); //An acknowledge signal is sent to the bus on the following receiving byte (if FACK is cleared) or the
 																//current receiving byte
 
-						I2C0->D; //dummy reading
+						uint8_t pp = I2C0->D; //dummy reading
 
 						i2cConfig->state = I2C_STATE_READ_DATA; //Cambio el estado a Leer DATA
 						break;
