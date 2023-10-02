@@ -113,6 +113,12 @@ typedef struct{
 	 CAN_PERIPHERAL_CLOCK = 1
  }CAN_CLOCKS;
 
+
+
+
+ typedef void (*ptrToFunction)(canFrame_t frame);
+
+
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -167,5 +173,13 @@ typedef struct{
    *
    */
  void defaultCANConfig(canConfig_t * config);
+
+
+
+ /**
+   * @brief
+   *
+   */
+ void enableCanInterrup( uint8_t mb_id, ptrToFunction callback);
 
 #endif /*  PROTOCOLS_CAN_H_ */

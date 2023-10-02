@@ -20,6 +20,7 @@
 #include "drivers/drv_K64.h" // creamos funciones para acceder a switches y demas de la kinetis
 #include "drivers/drv_UART.h"
 #include "drivers/drv_FXOS8700CQ.h"
+#include "drivers/drv_I2C.h"
 #include "drivers/drv_CAN.h"
 
 /*******************************************************************************
@@ -109,6 +110,9 @@ void App_Init (void)
 	timerInit(); // init de timer
 	init_DEVBOARD(); // init de la placa shield creada por el grupo
 	initUART(); //Init UART
+	initI2c();
+	initBoardsCan();
+	initSensor();
 
 	//inicio los timers de UART
 	timerTx = timerGetId();
@@ -127,8 +131,8 @@ void App_Run (void)
 {
 	// updateo las posiciones de mi placa y de las demas
 	updateDispositives();
-	receiveBoardsPos();
-	sendPos2Boards();
+	//receiveBoardsPos();
+	//sendPos2Boards();
 
 
 
@@ -221,6 +225,7 @@ void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 
 void receiveBoardsPos(void){
+
 	receiveCAN(measurament);
 	uint8_t id = measurament.boardID;
 
@@ -238,9 +243,9 @@ void sendPos2Boards(void){
 	sendCan(measurament);
 
 	//Updateo los datos de mi placa (Buffer[0])
-	buffer[0].rolling = measurament.rolling;
-	buffer[0].tilt = measurament.tilt;
-	buffer[0].orientation = measurament.orientation;
+	buffer[0].rolling = measurament.rolling + '0';
+	buffer[0].tilt = measurament.tilt + '0';
+	buffer[0].orientation = measurament.orientation + '0';
 }
 
 

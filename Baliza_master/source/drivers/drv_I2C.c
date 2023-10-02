@@ -1,5 +1,5 @@
 /***************************************************************************//**
-  @file     drv_I2C.c
+  @file     board.h
   @brief    Board management
   @author   G4
  ******************************************************************************/
@@ -8,13 +8,13 @@
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-#include "drv_I2C.h"
+#include <drivers/drv_I2C.h>
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
-//ID con el que vamos a trabajar
-#define DEFAULT_ID 0
+ 
+ 
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -23,35 +23,48 @@
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
-
+static I2C_CONFIG i2cConfig;
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
-
- void initUART(void){
-	 uint8_t id = DEFAULT_ID;
-	 I2CInit(id);
- }
-
- package_t receivePackage(void){
-	 package_t package;
-	 if(uartIsRxMsg(DEFAULT_ID)){
-		 if(uartGetRxMsgLength(DEFAULT_ID) >= SIZE_OF_PACKAGE  ){
-			 uartReadMsg(DEFAULT_ID,package.dataType, SIZE_OF_PACKAGE);
-		 }
-	 }
-	 return package;
-
- }
-
- void sendPackage(package_t package){
-	 if(uartIsTxMsgComplete(DEFAULT_ID)){
-		 uartWriteMsg(DEFAULT_ID, package.dataType, SIZE_OF_PACKAGE);
-	 }
-	 else{
+ 
+ 
+void initI2c(void){
+	i2cDefaultConfig(&i2cConfig,FXOS8700CQ_SLAVE_ADDR,  48800); //48800Hz. El callback es el que lee los datos desde el  chip
+	initI2C(&i2cConfig);
+}
 
 
-	 }
+void loadCallback(ptrToFun callback_){
+	i2cConfig.callback = callback_;
+}
+
+void i2cCommunicationHandler(uint8_t adress_register_,uint8_t * data_,uint8_t size,I2C_MODE mode,ptrToFun callback){
 
 
- }
+
+	if(size==1){
+
+		i2cConfig.dataSize = size;
+		i2cConfig.address_register = adress_register_;
+		i2cConfig.data[0] = (*data_);
+
+		i2cWriteAndRead(i2cConfig, mode); //Leo o escribo segun corresponda
+		//Cuando termine , llamo a
+		callback();
+	}
+	else{
+		i2cConfig.address_register = adress_register_;
+		i2cConfig.data[0] = 0;
+		i2cConfig.dataSize = size;
+		i2cStartCommunication(&i2cConfig , mode);
+	}
+}
+
+
+
+
+
+
+
+

@@ -14,13 +14,15 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "timers\timer.h"
-#include "protocols\I2C.h"
+#include <stdint.h>
+#include"MCAL/gpio.h"
+#include "MCAL/board.h"
+#include "drv_I2C.h"
 
  /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
- 
- 
+
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -61,6 +63,7 @@ SENSOR_CONTROL configSensor(void);
 
 rawdata_t getMagData(void);
 rawdata_t getAccData(void);
+void callbackRead(void);
 
  
 #endif /*  DRIVERS_DRV_FXOS8700CQ_H_ */

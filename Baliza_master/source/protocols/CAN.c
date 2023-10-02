@@ -20,7 +20,7 @@
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-typedef void (*ptrToFun)(canFrame_t frame);
+
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -30,7 +30,7 @@ void configureCANClock(canConfig_t * config);
  void configureIndivRxMask(void);
 
 
- static ptrToFun callbacks[CAN_ID_COUNT];
+ static ptrToFunction callbacks[CAN_ID_COUNT];
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
@@ -57,7 +57,7 @@ void configureCANClock(canConfig_t * config);
 		enableCAN(); // Enable CAN
 		while((CAN0->MCR & CAN_MCR_FRZACK_MASK)!=CAN_MCR_FRZACK_MASK); //wait til CAN freezes . it enters freezing bc SoftStart resets FRZ and HLT to 1
 
-		configureIndivRxMask();
+		//configureIndivRxMask();
 
 		for(int i=0; i<CAN_ID_COUNT; i++){ // Buffers reset
 			CAN0->MB[i].CS = ( CAN0->MB[i].CS &= ~CAN_CS_CODE_MASK ); // Limpio la informacion preexistente en esa posicion
@@ -95,7 +95,7 @@ void configureCANClock(canConfig_t * config);
  }
 
 
- void enableCanInterrup( uint8_t mb_id, ptrToFun callback){
+ void enableCanInterrup( uint8_t mb_id, ptrToFunction callback){
  	NVIC_EnableIRQ(CAN0_ORed_Message_buffer_IRQn);
  	CAN0->IMASK1 |= (1UL<<mb_id);
  	callbacks[mb_id] = callback;
@@ -125,12 +125,10 @@ void defaultCANConfig(canConfig_t * config){
 }
 
 
-/*
 void configureIndivRxMask(void){
 	// TODO se podria agregar otro control de datos recibidos.
 	CAN0->MCR |= CAN_MCR_IRMQ_MASK; // USO MB con mascaras que me da el micro
 }
-*/
 
 void  configRxMB( uint8_t mb_id, uint32_t ID){
 	/// inactivate Mailbox
