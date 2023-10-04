@@ -183,7 +183,6 @@ bool i2cStartCommunication( I2C_MODE mode){
 		isrI2cConfig.indexData = 0;
 		isrI2cConfig.flag = FLAG_TRANSMISSION;	// Set transmission in progress flag
 		I2C0->C1 |= (I2C_C1_MST_MASK);
-		I2C0->S |= I2C_S_ARBL_MASK;
 		isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
 		//uint8_t dummy = I2C0->D;
 		I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
