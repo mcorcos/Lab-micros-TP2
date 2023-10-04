@@ -92,12 +92,12 @@ typedef struct{
  /**
   * @brief Initializer for the I2C.
   */
-void initI2C(I2C_CONFIG * i2cConfig);
+void initI2C(void);
 
 /**
  * @brief Initializer for the I2C dfault config.
  */
-void i2cDefaultConfig(I2C_CONFIG * i2cConfig, uint8_t address, uint16_t frequency);
+void i2cDefaultConfig( uint8_t address, uint16_t frequency);
 
 
 
@@ -105,13 +105,12 @@ void i2cDefaultConfig(I2C_CONFIG * i2cConfig, uint8_t address, uint16_t frequenc
   * @brief leer o escribir en I2C
   * @return returns state
   */
-void i2cWriteAndRead(I2C_CONFIG  i2cConfig, I2C_MODE mode); //Blocking
+void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_,uint8_t * data_,uint8_t size); //Blocking
+
+void i2cLoadCallback(ptrToFun callback_);
 
 
-
-
-
-bool i2cStartCommunication(I2C_CONFIG * i2cConfig , I2C_MODE mode); // orioginalmente era local de I2c.c ,
+bool i2cStartCommunication( I2C_MODE mode); // orioginalmente era local de I2c.c ,
 																			//pero la tengo que sacar para DRV_I2C para poder comenzar una comunicacion y que luego la siga
 																			// el handler de interrupts
 

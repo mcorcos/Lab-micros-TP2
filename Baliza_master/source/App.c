@@ -76,7 +76,7 @@ static package_t message4CPU[CANT_DISP][CANT_PACKAGE+1]; // +1 its used to add '
 static package_t * messagePointer = &(message4CPU[0][0]);
 
 
-
+static bool sensorInit = false;
 
 /*******************************************************************************
  *******************************************************************************
@@ -114,6 +114,8 @@ void App_Init (void)
 	initBoardsCan();
 	initSensor();
 
+
+
 	//inicio los timers de UART
 	timerTx = timerGetId();
 	timerRx = timerGetId();
@@ -129,6 +131,10 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
+	if(!sensorInit){
+		sensorInit = true;
+		//initSensor();
+	}
 	// updateo las posiciones de mi placa y de las demas
 	updateDispositives();
 	//receiveBoardsPos();
