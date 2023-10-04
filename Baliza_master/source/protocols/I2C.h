@@ -60,7 +60,9 @@ typedef enum{
 typedef enum{
 	I2C_FAULT_END_READING,
 	I2C_FAULT_END_WRITING,
-	I2C_FAULT_NO_ACK
+	I2C_FAULT_BUS_BUSY,
+	I2C_FAULT_NO_ACK,
+	I2C_FAULT_NO_FAULT
 }I2C_FAULT;
 
 
@@ -97,7 +99,7 @@ void initI2C(void);
 /**
  * @brief Initializer for the I2C dfault config.
  */
-void i2cDefaultConfig( uint8_t address, uint16_t frequency);
+void i2cDefaultConfig( uint8_t address);
 
 
 
@@ -109,11 +111,7 @@ void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_,uint8_t * data_,u
 
 void i2cLoadCallback(ptrToFun callback_);
 
-
-bool i2cStartCommunication( I2C_MODE mode); // orioginalmente era local de I2c.c ,
-																			//pero la tengo que sacar para DRV_I2C para poder comenzar una comunicacion y que luego la siga
-																			// el handler de interrupts
-
+I2C_FAULT getFault(void);
 
  
 #endif // _I2C_H_

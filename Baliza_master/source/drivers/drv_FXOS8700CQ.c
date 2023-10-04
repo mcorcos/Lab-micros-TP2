@@ -95,12 +95,23 @@ void initSensor(void){
 SENSOR_CONTROL configSensor(void){
 
 	I2CBYTE databyte;
-	loadCallback(callbackRead);
+	loadCallback(callbackIsFinished);
+	databyte = 0;
     // read and check the FXOS8700CQ WHOAMI register
     // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
-    i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ,callbackIsFinished);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+    i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ);
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
+
     i2cSensor.status = WORKING;
+
     if (databyte != FXOS8700CQ_WHOAMI_VAL) //Error en el sensor
     	return SENSOR_ERROR;
 
@@ -110,7 +121,7 @@ SENSOR_CONTROL configSensor(void){
 
     databyte = 0x00;
 
-    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,	I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,	I2C_WRITE);
 
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
@@ -123,7 +134,7 @@ SENSOR_CONTROL configSensor(void){
      [1-0]: m_hms=11=3: select hybrid mode with accel and magnetometer active*/
 
     databyte = 0x1F;
-    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG1, &databyte, 1,	I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG1, &databyte, 1,	I2C_WRITE);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
 
@@ -137,7 +148,7 @@ SENSOR_CONTROL configSensor(void){
 
     databyte = 0x20;
 
-    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG2, &databyte, 1,	I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG2, &databyte, 1,	I2C_WRITE);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
 
@@ -146,7 +157,7 @@ SENSOR_CONTROL configSensor(void){
 
 	databyte=DATA_READY_ENABLE;
 
-    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG4, &databyte, 1,	I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG4, &databyte, 1,	I2C_WRITE);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
 
@@ -154,7 +165,7 @@ SENSOR_CONTROL configSensor(void){
 
 	databyte=INTERRUPT_ROUTED_INT2;
 
-    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG5, &databyte, 1,	I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG5, &databyte, 1,	I2C_WRITE);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
 
@@ -164,7 +175,7 @@ SENSOR_CONTROL configSensor(void){
      [1-0]: fs=01 for accelerometer range of +/-4g range with 0.488mg/LSB*/
 
     databyte = 0x01;
-    i2cCommunicationHandler( FXOS8700CQ_XYZ_DATA_CFG, &databyte, 1,I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_XYZ_DATA_CFG, &databyte, 1,I2C_WRITE);
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
     i2cSensor.status = WORKING;
 
@@ -176,7 +187,7 @@ SENSOR_CONTROL configSensor(void){
      [0]: active=1 to take the part out of standby and enable sampling*/
 
     databyte = 0x0D;
-    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,I2C_WRITE, callbackIsFinished);
+    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,I2C_WRITE);
 
     while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
 
@@ -204,7 +215,7 @@ void dataIsReady(void){
 
 		uint8_t databyte;
 		databyte = 0;
-	    i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, &databyte,FXOS8700CQ_READ_LEN,I2C_READ, NULL);
+	    i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, &databyte,FXOS8700CQ_READ_LEN,I2C_READ);
 }
 
 void callbackRead(void){ //Funcion llamada desde el i2cCommunications. pasa los datos del buffer hacia las estructuras

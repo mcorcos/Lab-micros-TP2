@@ -32,6 +32,9 @@
 //Defines para el INIT
 #define I2C_CANT_IDS 2 //Tenemos I2C 0, 1 y 2
 
+
+#define I2C_CLEAR_IRQ_FLAG       (I2C0->S |= I2C_S_IICIF_MASK)
+
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -75,8 +78,14 @@ void initI2C(void){
 
 
 
-	// Write I2C0 Control Register 1
-	I2C0->C1 |=( I2C_C1_IICEN_MASK )  ;	// enable i2c & i2c interrupts
+	I2C0->C1 = 0x00; // I2C Control Register 1
+	I2C0->C1 |= I2C_C1_IICEN_MASK; // Enables I2C module operation.
+	I2C0->C1 |= I2C_C1_IICIE_MASK; // Enables I2C interrupt requests.
+	I2C0->S = I2C_S_TCF_MASK | I2C_S_IICIF_MASK;
+	//Configure clock
+	I2C0->F = ((0b00 << I2C_F_MULT_SHIFT) | (0x3F));
+
+	NVIC_EnableIRQ(I2C0_IRQn);
 
 
 	//Set Mux
@@ -105,23 +114,11 @@ void initI2C(void){
 	(PORTE->PCR)[PIN_SCL] |= (HIGH << PORT_PCR_PS_SHIFT);
 
 
-	//Configure clock
-	I2C0->F = ((0b00 << I2C_F_MULT_SHIFT) | (0x3F));\
-
-	//NVIC_EnableIRQ(PORTE_IRQn); // Enable NVIC interrupts
-	NVIC_EnableIRQ(I2C0_IRQn); // Enable NVIC interrupts
-
-	I2C0->C1 = 0;
-	I2C0->C1 |= I2C_C1_IICEN_MASK;
-	I2C0->C1 |= I2C_C1_IICIE_MASK;
-
-
-
 }
 
 
 
-void i2cDefaultConfig( uint8_t address, uint16_t frequency) {
+void i2cDefaultConfig( uint8_t address) {
 	isrI2cConfig.address_r = (address<<1) | 0x01;   // OR con 0b00000001
 	isrI2cConfig.address_w = (address<<1) & 0xFE;   // AND con 0b11111110 bc cuando termina en 0 es para escribir
 	isrI2cConfig.state = I2C_STATE_NONE;
@@ -129,7 +126,6 @@ void i2cDefaultConfig( uint8_t address, uint16_t frequency) {
 	isrI2cConfig.id = 0;
 	isrI2cConfig.mode = I2C_READ;
 	isrI2cConfig.indexData = 0;
-	isrI2cConfig.freq = frequency;
 	isrI2cConfig.data = buffer;
 }
 
@@ -143,61 +139,67 @@ void i2cLoadCallback(ptrToFun callback_){
 void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_ , uint8_t * data_ , uint8_t size){
 
 
-	isrI2cConfig.address_register = adress_register_;
-	isrI2cConfig.data[0] = *data_;
-	isrI2cConfig.dataSize = size;
 
-
-	if(mode == I2C_WRITE)
-		while(i2cStartCommunication(I2C_WRITE) == false)	{ //devuelve false cuando esta BUSY. entonces espera a que se libere para comenzar la comunicacion
-
-		}
-	else if(mode == I2C_READ)
-		while(i2cStartCommunication(I2C_READ) == false) 	{
-
-		}
-
-	// si pude avanzar sin tener errores de i2c
-	while(isrI2cConfig.flag == FLAG_TRANSMISSION) //Mientras este en transmision
+	if((I2C0->S & I2C_S_BUSY_MASK) != 1 ) //CHECK IF BUS BUSY
 	{
-		while(((I2C0->S & I2C_S_IICIF_MASK)>>I2C_S_IICIF_SHIFT)==0); //espero a tener una interrupcion
-		I2C0->S |= I2C_S_IICIF_MASK;
-		i2cCommunication(); //mini fsm que lleva adelante la comunicacion
+
+		isrI2cConfig.address_register = adress_register_;
+		isrI2cConfig.data[0] = *data_;
+		isrI2cConfig.dataSize = size;
+
+
+		if(mode == I2C_WRITE){
+
+			isrI2cConfig.fault = I2C_FAULT_NO_FAULT;
+
+			isrI2cConfig.mode = I2C_WRITE;	// Set write mode in control structure
+
+			isrI2cConfig.indexData = 0;
+
+			isrI2cConfig.flag = FLAG_TRANSMISSION;	// Set transmission in progress flag
+
+			isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
+
+			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
+			I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
+
+			I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
+
+		}
+
+		else if(mode == I2C_READ){
+
+			isrI2cConfig.fault = I2C_FAULT_NO_FAULT;
+
+			isrI2cConfig.mode = I2C_WRITE;	// Set write mode in control structure
+
+			isrI2cConfig.indexData = 0;
+
+			isrI2cConfig.flag = FLAG_TRANSMISSION;	// Set transmission in progress flag
+
+			isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
+
+			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
+			I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
+
+			I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
+		}
 	}
-	while(((I2C0->S & I2C_S_BUSY_MASK) != 0));		// espero hasta que este libre .si esta en 0 esta en idle . en 1 esta busy
+	else
+	{
+		isrI2cConfig.fault = I2C_FAULT_BUS_BUSY;
+		isrI2cConfig.callback();
+	}
+
 
 }
 
 
-
-bool i2cStartCommunication( I2C_MODE mode){
-
-
-
-	if((I2C0->S & I2C_S_BUSY_MASK) != 0){ //Si el Bus esta ocupado que vuelva
-		return false;
-	}
-	else //Seteo el primer estado de la comunicacion
-	{
-		isrI2cConfig.mode = mode;	// Set write mode in control structure
-		isrI2cConfig.indexData = 0;
-		isrI2cConfig.flag = FLAG_TRANSMISSION;	// Set transmission in progress flag
-		I2C0->C1 |= (I2C_C1_MST_MASK);
-		isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
-		//uint8_t dummy = I2C0->D;
-		I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
-		//When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
-		I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
-
-		return true;
-	}
-
-}
 
 
 void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun modo de operacion. mini FSM que controla bien el proceso de hablar entre chips
 
-
+	I2C_CLEAR_IRQ_FLAG;
 
 	uint8_t state = isrI2cConfig.state;
 	uint8_t mode = isrI2cConfig.mode;
@@ -210,8 +212,9 @@ void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun mo
 						if(((I2C0->S & I2C_S_RXAK_MASK) == 0))	//recibi un ACK
 						{
 							// Write register address and switch to receive mode
-							I2C0->D = isrI2cConfig.address_register;
 							isrI2cConfig.state = I2C_STATE_RSTART;
+							I2C0->D = isrI2cConfig.address_register;
+
 						}
 						else
 							i2cEndCommunication(I2C_FAULT_NO_ACK);
@@ -300,18 +303,28 @@ void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun mo
 
 static bool i2cEndCommunication( I2C_FAULT fault_){
 
-	I2C0->C1 &= ~(1<<I2C_C1_MST_SHIFT);
+	I2C0->C1 &= ~(1<<I2C_C1_MST_SHIFT); //STOP SIGNAL
+
+	isrI2cConfig.fault = fault_; //Que falta fue
+
 	isrI2cConfig.state = I2C_STATE_NONE;
+
 	isrI2cConfig.flag = FLAG_OK;
-	isrI2cConfig.fault = fault_;
-	//Aca se tiene que llamar a una fuencion que parsee los datos en el exterior
-	isrI2cConfig.callback();
+
+	isrI2cConfig.callback(); //esta funcion es para que el usuario del sensor pueda ejecutar un callback para
+	//						levantar un flag y segui con la configuracion
 	return true;
 
 }
 
 
 __ISR__ I2C0_IRQHandler (void){
-	//I2C0->S |= I2C_S_IICIF_MASK;
-	//i2cCommunication();
+	i2cCommunication();
 }
+
+
+
+I2C_FAULT getFault(void){
+	return isrI2cConfig.fault;
+}
+

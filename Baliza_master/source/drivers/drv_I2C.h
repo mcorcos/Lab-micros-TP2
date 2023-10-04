@@ -34,8 +34,8 @@
  ******************************************************************************/
  void initI2c(void);
  void loadCallback(ptrToFun callback_);
- void i2cCommunicationHandler( uint8_t adress_register_,uint8_t * data,uint8_t size,I2C_MODE mode,ptrToFun callback);
-
+ void i2cCommunicationHandler( uint8_t adress_register_,uint8_t * data,uint8_t size,I2C_MODE mode);
+ I2C_FAULT faultGetter(void);
 
 
 
