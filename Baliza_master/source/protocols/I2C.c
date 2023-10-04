@@ -76,14 +76,16 @@ void initI2C(void){
 
 
 
-
+	//Configure clock
+	I2C0->F = 0x97;
 
 	I2C0->C1 = 0x00; // I2C Control Register 1
+
 	I2C0->C1 |= I2C_C1_IICEN_MASK; // Enables I2C module operation.
+
 	I2C0->C1 |= I2C_C1_IICIE_MASK; // Enables I2C interrupt requests.
-	I2C0->S = I2C_S_TCF_MASK | I2C_S_IICIF_MASK;
-	//Configure clock
-	I2C0->F = ((0b00 << I2C_F_MULT_SHIFT) | (0x3F));
+
+
 
 	NVIC_EnableIRQ(I2C0_IRQn);
 
@@ -171,22 +173,22 @@ void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_ , uint8_t * data_
 
 			isrI2cConfig.fault = I2C_FAULT_NO_FAULT;
 
-			isrI2cConfig.mode = I2C_WRITE;	// Set write mode in control structure
+			isrI2cConfig.mode = I2C_READ;	// Set write mode in control structure
 
 			isrI2cConfig.indexData = 0;
 
 			isrI2cConfig.flag = FLAG_TRANSMISSION;	// Set transmission in progress flag
 
+
 			isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
-
-			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
 			I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
+			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
 
-			I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
+
+			I2C0->D = isrI2cConfig.address_r;		// Send the desired address to the bus + write bit
 		}
 	}
-	else
-	{
+	else{
 		isrI2cConfig.fault = I2C_FAULT_BUS_BUSY;
 		isrI2cConfig.callback();
 	}
@@ -203,6 +205,7 @@ void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun mo
 
 	uint8_t state = isrI2cConfig.state;
 	uint8_t mode = isrI2cConfig.mode;
+
 	if(mode == I2C_READ){
 
 		switch(state){ //Depende en que estado esta la i2c
@@ -319,7 +322,9 @@ static bool i2cEndCommunication( I2C_FAULT fault_){
 
 
 __ISR__ I2C0_IRQHandler (void){
-	i2cCommunication();
+	if(I2C0->S & I2C_S_TCF_MASK ){
+		i2cCommunication();
+	}
 }
 
 

@@ -96,7 +96,37 @@ SENSOR_CONTROL configSensor(void){
 
 	I2CBYTE databyte;
 	loadCallback(callbackIsFinished);
-	databyte = 0;
+	databyte = 0x40;
+	// reset
+	i2cCommunicationHandler(FXOS8700CQ_CTRL_REG2,&databyte,(uint8_t)1,I2C_WRITE);
+
+	while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+	}
+	i2cSensor.status = WORKING;
+
+
+
+	databyte = 0x5F;
+	// reset 2
+	i2cCommunicationHandler(FXOS8700CQ_M_CTRL_REG1,&databyte,(uint8_t)1,I2C_WRITE);
+
+	while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+	}
+	i2cSensor.status = WORKING;
+
+
     // read and check the FXOS8700CQ WHOAMI register
     // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
     i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ);
@@ -109,11 +139,7 @@ SENSOR_CONTROL configSensor(void){
 		}
 
     }
-
     i2cSensor.status = WORKING;
-
-    if (databyte != FXOS8700CQ_WHOAMI_VAL) //Error en el sensor
-    	return SENSOR_ERROR;
 
      /*write 0000 0000 = 0x00 to accelerometer control register 1 to place FXOS8700CQ into standby
      [7-1] = 0000 000

@@ -112,7 +112,7 @@ void App_Init (void)
 	initUART(); //Init UART
 	initI2c();
 	initBoardsCan();
-	initSensor();
+
 
 
 
@@ -133,7 +133,7 @@ void App_Run (void)
 {
 	if(!sensorInit){
 		sensorInit = true;
-		//initSensor();
+		initSensor();
 	}
 	// updateo las posiciones de mi placa y de las demas
 	updateDispositives();
