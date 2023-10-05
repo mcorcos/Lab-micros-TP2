@@ -58,12 +58,13 @@ typedef struct{
  ******************************************************************************/
 
 
-void initSensor(void);
+SENSOR_CONTROL initSensor(void);
 SENSOR_CONTROL configSensor(void);
 
 rawdata_t getMagData(void);
 rawdata_t getAccData(void);
 void callbackRead(void);
-
+void ReadAccelMagnData(void);
+I2C_COM_CONTROL getStatus(void);
  
 #endif /*  DRIVERS_DRV_FXOS8700CQ_H_ */

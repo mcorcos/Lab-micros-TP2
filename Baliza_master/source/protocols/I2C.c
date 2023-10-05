@@ -51,7 +51,6 @@ static I2C_CONFIG isrI2cConfig;
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH LOCAL SCOPE
  ******************************************************************************/
- static uint8_t buffer[12];
 
 
 
@@ -81,9 +80,9 @@ void initI2C(void){
 
 	I2C0->C1 = 0x00; // I2C Control Register 1
 
+	I2C0->C1 |= I2C_C1_IICIE_MASK; // Enables I2C interrupt requests.
 	I2C0->C1 |= I2C_C1_IICEN_MASK; // Enables I2C module operation.
 
-	I2C0->C1 |= I2C_C1_IICIE_MASK; // Enables I2C interrupt requests.
 
 
 
@@ -91,20 +90,15 @@ void initI2C(void){
 
 
 	//Set Mux
+	(PORTE->PCR)[PIN_SDA] =0;
 	(PORTE->PCR)[PIN_SDA] &= ~PORT_PCR_MUX_MASK;
 	(PORTE->PCR)[PIN_SDA] |= PORT_PCR_MUX(PORT_mAlt5);
 
+	(PORTE->PCR)[PIN_SCL] =0;
 	(PORTE->PCR)[PIN_SCL] &= ~PORT_PCR_MUX_MASK;
 	(PORTE->PCR)[PIN_SCL] |= PORT_PCR_MUX(PORT_mAlt5);
 
-	//Disable int
-	(PORTE->PCR)[PIN_SDA] &= (~PORT_PCR_IRQC_MASK);
-	(PORTE->PCR)[PIN_SDA] |= PORT_PCR_IRQC(
-			GPIO_IRQ_MODE_DISABLE);
 
-	(PORTE->PCR)[PIN_SCL] &= ~PORT_PCR_IRQC_MASK;
-	(PORTE->PCR)[PIN_SCL] |= PORT_PCR_IRQC(
-			GPIO_IRQ_MODE_DISABLE);
 
 	(PORTE->PCR)[PIN_SDA] |= PORT_PCR_ODE_MASK;//Set open drain
 	(PORTE->PCR)[PIN_SCL] |= PORT_PCR_ODE_MASK;
@@ -128,7 +122,6 @@ void i2cDefaultConfig( uint8_t address) {
 	isrI2cConfig.id = 0;
 	isrI2cConfig.mode = I2C_READ;
 	isrI2cConfig.indexData = 0;
-	isrI2cConfig.data = buffer;
 }
 
 
@@ -146,7 +139,7 @@ void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_ , uint8_t * data_
 	{
 
 		isrI2cConfig.address_register = adress_register_;
-		isrI2cConfig.data[0] = *data_;
+		isrI2cConfig.data = data_;
 		isrI2cConfig.dataSize = size;
 
 
@@ -162,8 +155,9 @@ void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_ , uint8_t * data_
 
 			isrI2cConfig.state = I2C_STATE_WRITE_ADRESS_REGISTER;	// El proximo estado tiene que ser escribir la direccion del Chp que me interesa
 
-			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
 			I2C0->C1 |= (I2C_C1_TX_MASK) ;		//Tx MODE
+
+			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
 
 			I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
 
@@ -185,7 +179,7 @@ void i2cWriteAndRead( I2C_MODE mode , uint8_t adress_register_ , uint8_t * data_
 			I2C0->C1 |= (I2C_C1_MST_MASK);  //When MST is changed from 0 to 1, a START signal is generated on the bus and master mode is selected.
 
 
-			I2C0->D = isrI2cConfig.address_r;		// Send the desired address to the bus + write bit
+			I2C0->D = isrI2cConfig.address_w;		// Send the desired address to the bus + write bit
 		}
 	}
 	else{
@@ -251,7 +245,7 @@ void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun mo
 					{
 						if(isrI2cConfig.indexData == (isrI2cConfig.dataSize-1))	// es el ultimo byte a leer
 
-							i2cEndCommunication(I2C_FAULT_END_READING);
+							i2cEndCommunication(I2C_FAULT_NO_FAULT);
 
 						else if(isrI2cConfig.indexData == isrI2cConfig.dataSize-2)	//Aca es momento de mandar el NACK
 							I2C0->C1 |= 1<<I2C_C1_TXAK_SHIFT;					//Mando un No acknowledge
@@ -281,7 +275,7 @@ void i2cCommunication(){ //Es la misma para leer y escribir, diferencia segun mo
 			case I2C_STATE_WRITE_DATA:
 
 				if(isrI2cConfig.indexData == isrI2cConfig.dataSize)	// si estoy al final de la data que quiero mandar, termina la transmicion
-					i2cEndCommunication(I2C_FAULT_END_WRITING);
+					i2cEndCommunication(I2C_FAULT_NO_FAULT);
 				else
 				{
 					if((I2C0->S & I2C_S_RXAK_MASK) == 0)	//recibi un ACK

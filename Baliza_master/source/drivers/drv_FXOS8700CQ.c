@@ -70,7 +70,7 @@ static rawdata_t accelerometer ;
 static rawdata_t magnet ;
 static i2c i2cSensor;
 static I2CBYTE buffer[FXOS8700CQ_READ_LEN]; // read buffer
-
+static uint32_t i;
 
 void callbackIsFinished(void);
 void dataIsReady(void);
@@ -80,7 +80,7 @@ void dataIsReady(void);
 
 
 
-void initSensor(void){
+SENSOR_CONTROL initSensor(void){
 	//configuracion del sensor
 	SENSOR_CONTROL sensor = configSensor();
 /*	//Create a timer
@@ -96,40 +96,40 @@ SENSOR_CONTROL configSensor(void){
 
 	I2CBYTE databyte;
 	loadCallback(callbackIsFinished);
-	databyte = 0x40;
-	// reset
-	i2cCommunicationHandler(FXOS8700CQ_CTRL_REG2,&databyte,(uint8_t)1,I2C_WRITE);
 
-	while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
-
-		if( getFault() != I2C_FAULT_NO_FAULT)
-		{
-			return (SENSOR_ERROR);
-		}
-
-	}
-	i2cSensor.status = WORKING;
-
-
-
-	databyte = 0x5F;
-	// reset 2
-	i2cCommunicationHandler(FXOS8700CQ_M_CTRL_REG1,&databyte,(uint8_t)1,I2C_WRITE);
-
-	while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
-
-		if( getFault() != I2C_FAULT_NO_FAULT)
-		{
-			return (SENSOR_ERROR);
-		}
-
-	}
-	i2cSensor.status = WORKING;
-
+	databyte = 0x00;
 
     // read and check the FXOS8700CQ WHOAMI register
     // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
     i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ);
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
+    i2cSensor.status = WORKING;
+    if(databyte != FXOS8700CQ_WHOAMI_VAL){
+    	return (SENSOR_ERROR);
+    }
+     /*write 0000 0000 = 0x00 to accelerometer control register 1 to place FXOS8700CQ into standby
+     [7-1] = 0000 000
+     [0]: active=0*/
+
+    databyte = 0x00;
+
+    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,I2C_WRITE);
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
 
     while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
 
@@ -141,17 +141,6 @@ SENSOR_CONTROL configSensor(void){
     }
     i2cSensor.status = WORKING;
 
-     /*write 0000 0000 = 0x00 to accelerometer control register 1 to place FXOS8700CQ into standby
-     [7-1] = 0000 000
-     [0]: active=0*/
-
-    databyte = 0x00;
-
-    i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,	I2C_WRITE);
-
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
-    i2cSensor.status = WORKING;
-
     /* write 0001 1111 = 0x1F to magnetometer control register 1
      [7]: m_acal=0: auto calibration disabled
      [6]: m_rst=0: no one-shot magnetic reset
@@ -161,7 +150,19 @@ SENSOR_CONTROL configSensor(void){
 
     databyte = 0x1F;
     i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG1, &databyte, 1,	I2C_WRITE);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     i2cSensor.status = WORKING;
 
      /*write 0010 0000 = 0x20 to magnetometer control register 2
@@ -175,7 +176,19 @@ SENSOR_CONTROL configSensor(void){
     databyte = 0x20;
 
     i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG2, &databyte, 1,	I2C_WRITE);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     i2cSensor.status = WORKING;
 
 
@@ -184,7 +197,19 @@ SENSOR_CONTROL configSensor(void){
 	databyte=DATA_READY_ENABLE;
 
     i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG4, &databyte, 1,	I2C_WRITE);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     i2cSensor.status = WORKING;
 
     // Voy a hacer el routing de la interrupcion de data ready a el PC13 (datasheet de la kinetis y del chip)
@@ -192,7 +217,19 @@ SENSOR_CONTROL configSensor(void){
 	databyte=INTERRUPT_ROUTED_INT2;
 
     i2cCommunicationHandler( FXOS8700CQ_M_CTRL_REG5, &databyte, 1,	I2C_WRITE);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     i2cSensor.status = WORKING;
 
 
@@ -202,7 +239,19 @@ SENSOR_CONTROL configSensor(void){
 
     databyte = 0x01;
     i2cCommunicationHandler( FXOS8700CQ_XYZ_DATA_CFG, &databyte, 1,I2C_WRITE);
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
+
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     i2cSensor.status = WORKING;
 
     /* write 0000 1101 = 0x0D to accelerometer control register 1
@@ -215,8 +264,18 @@ SENSOR_CONTROL configSensor(void){
     databyte = 0x0D;
     i2cCommunicationHandler( FXOS8700CQ_CTRL_REG1, &databyte, 1,I2C_WRITE);
 
-    while(i2cSensor.status == WORKING ); // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+    for (i = 0; i < 1000000; i++) {
+        // Este bucle creará un retraso aproximado de 1 segundo
+    }
 
+    while(i2cSensor.status == WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+
+		if( getFault() != I2C_FAULT_NO_FAULT)
+		{
+			return (SENSOR_ERROR);
+		}
+
+    }
     //Voy a setear el pin PC13 como entradad de interrupciones (active low default)
 
     gpioMode (PIN_INT2_FXOS8700XQ, INPUT);
@@ -239,38 +298,31 @@ void callbackIsFinished(void){
 
 void dataIsReady(void){
 
-		uint8_t databyte;
-		databyte = 0;
-	    i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, &databyte,FXOS8700CQ_READ_LEN,I2C_READ);
+	    i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, buffer,FXOS8700CQ_READ_LEN,I2C_READ);
 }
 
 void callbackRead(void){ //Funcion llamada desde el i2cCommunications. pasa los datos del buffer hacia las estructuras
 
-	if(i2cSensor.status == SENSOR_INITIALIZED){
 
+	int16_t accelerometerXAxis = (int16_t)(((buffer[1] << 8) | buffer[2])) >> 2; //paso de dos uint8  a una palabra de 14 bits
+	int16_t accelerometerYAxis = (int16_t)(((buffer[3] << 8) | buffer[4])) >> 2;
+	int16_t accelerometerZAxis = (int16_t)(((buffer[5] << 8) | buffer[6])) >> 2;
 
-		int16_t accelerometerXAxis = (int16_t)(((buffer[1] << 8) | buffer[2])) >> 2; //paso de dos uint8  a una palabra de 14 bits
-		int16_t accelerometerYAxis = (int16_t)(((buffer[3] << 8) | buffer[4])) >> 2;
-		int16_t accelerometerZAxis = (int16_t)(((buffer[5] << 8) | buffer[6])) >> 2;
+	int16_t magnetXAxis = (buffer[7] << 8) | buffer[8];
+	int16_t magnetYAxis = (buffer[9] << 8) | buffer[10];
+	int16_t magnetZAxis = (buffer[11] << 8) | buffer[12];
 
-		int16_t magnetXAxis = (buffer[7] << 8) | buffer[8];
-		int16_t magnetYAxis = (buffer[9] << 8) | buffer[10];
-		int16_t magnetZAxis = (buffer[11] << 8) | buffer[12];
+	accelerometer.x =accelerometerXAxis*ACC_CONVERSION; //cargo los datos raw en accel y magnet
+	accelerometer.y =accelerometerYAxis*ACC_CONVERSION;
+	accelerometer.z =accelerometerZAxis*ACC_CONVERSION;
+	magnet.x = magnetXAxis*MAG_CONVERSION;
+	magnet.y = magnetYAxis*MAG_CONVERSION;
+	magnet.z = magnetZAxis*MAG_CONVERSION;
 
-		accelerometer.x =accelerometerXAxis*ACC_CONVERSION; //cargo los datos raw en accel y magnet
-		accelerometer.y =accelerometerYAxis*ACC_CONVERSION;
-		accelerometer.z =accelerometerZAxis*ACC_CONVERSION;
-		magnet.x = magnetXAxis*MAG_CONVERSION;
-		magnet.y = magnetYAxis*MAG_CONVERSION;
-		magnet.z = magnetZAxis*MAG_CONVERSION;
+	i2cSensor.status = FINISHED;
 
-
-	}
-	else{ // no esta inicializado aun
-
-
-	}
 }
+
 
 
 rawdata_t getMagData(void){
@@ -281,4 +333,22 @@ rawdata_t getAccData(void){
 }
 
 
+void ReadAccelMagnData(void)
+{
+	// read FXOS8700CQ_READ_LEN=13 bytes ( six channels of data)
+	if(i2cSensor.status != WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
+		i2cSensor.status = WORKING ;
+		loadCallback(callbackRead);
+		i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, buffer,FXOS8700CQ_READ_LEN,I2C_READ);
+
+	}
+
+
+
+}
+
+
+I2C_COM_CONTROL getStatus(void){
+	return i2cSensor.status;
+}
 

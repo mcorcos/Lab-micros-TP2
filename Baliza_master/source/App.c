@@ -66,9 +66,9 @@ static tim_id_t timerRx;
 
 
 //Dispositives es el arreglo de informacion donde se guarda la info de las placas, y el mismo se manda a la cpu por medio de msg4CPU
-//Buffer es el arreglo donde guardo la informacion proviniente de CAN y de Acc y magnetometro
+//bufferDisp es el arreglo donde guardo la informacion proviniente de CAN y de Acc y magnetometro
 static dispositive_t dispositives[CANT_DISP];
-static dispositive_t buffer[CANT_DISP];
+static dispositive_t bufferDisp[CANT_DISP];
 
 
 //Mensaje que se envia a la computadora por UART
@@ -113,6 +113,10 @@ void App_Init (void)
 	initI2c();
 	initBoardsCan();
 
+	if(initSensor() == SENSOR_INITIALIZED){
+
+		sensorInit = false;
+	}
 
 
 
@@ -131,14 +135,16 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-	if(!sensorInit){
-		sensorInit = true;
-		initSensor();
-	}
+
 	// updateo las posiciones de mi placa y de las demas
 	updateDispositives();
+	if(getStatus() == FINISHED){
+		sendPos2Boards();
+	}
+
+	ReadAccelMagnData();
 	//receiveBoardsPos();
-	//sendPos2Boards();
+
 
 
 
@@ -155,9 +161,9 @@ void App_Run (void)
 
 void updateDispositives(void){  //Actualizo la informacion de los buffers hacia el
 	for(uint8_t i=0; i < CANT_DISP ; i++){
-		dispositives[i].rolling = buffer[i].rolling;
-		dispositives[i].tilt = buffer[i].tilt;
-		dispositives[i].orientation = buffer[i].orientation;
+		dispositives[i].rolling = bufferDisp[i].rolling;
+		dispositives[i].tilt = bufferDisp[i].tilt;
+		dispositives[i].orientation = bufferDisp[i].orientation;
 		updateMessage4CPU(i);
 	}
 }
@@ -205,10 +211,10 @@ void initDispositives(void){ // inicio los ids  de los dispositives
 
 void initBuffer(void){
 	for(uint8_t i=0;i<CANT_DISP;i++){
-		buffer[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
-		buffer[i].rolling = 'A'; //Dummy letter para chequear que funciona
-		buffer[i].tilt = 'B';
-		buffer[i].orientation = 'C';
+		bufferDisp[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
+		bufferDisp[i].rolling = 'A'; //Dummy letter para chequear que funciona
+		bufferDisp[i].tilt = 'B';
+		bufferDisp[i].orientation = 'C';
 	}
 }
 
@@ -235,9 +241,9 @@ void receiveBoardsPos(void){
 	receiveCAN(measurament);
 	uint8_t id = measurament.boardID;
 
-	buffer[id].rolling = measurament.rolling;
-	buffer[id].tilt = measurament.tilt;
-	buffer[id].orientation = measurament.orientation;
+	bufferDisp[id].rolling = measurament.rolling;
+	bufferDisp[id].tilt = measurament.tilt;
+	bufferDisp[id].orientation = measurament.orientation;
 
 }
 void sendPos2Boards(void){
@@ -246,12 +252,12 @@ void sendPos2Boards(void){
 	rawdata_t magnet = getMagData();
 
 	measurament = normalize(accel , magnet);
-	sendCan(measurament);
+	//sendCan(measurament);
 
-	//Updateo los datos de mi placa (Buffer[0])
-	buffer[0].rolling = measurament.rolling + '0';
-	buffer[0].tilt = measurament.tilt + '0';
-	buffer[0].orientation = measurament.orientation + '0';
+	//Updateo los datos de mi placa (bufferDisp[0])
+	bufferDisp[0].rolling = measurament.rolling ;
+	bufferDisp[0].tilt = measurament.tilt ;
+	bufferDisp[0].orientation = measurament.orientation ;
 }
 
 

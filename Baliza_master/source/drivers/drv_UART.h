@@ -24,7 +24,7 @@
 
 typedef struct{
  	char dataType[DATA_TYPE_SIZE]; // el identificador
- 	uint8_t value; // el valor
+ 	uint16_t value; // el valor
 
  }package_t;
 
