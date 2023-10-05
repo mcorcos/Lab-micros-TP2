@@ -257,24 +257,45 @@ void sendPos2Boards(void){
 	//Updateo los datos de mi placa (bufferDisp[0])
 	bufferDisp[0].rolling = measurament.rolling ;
 	bufferDisp[0].tilt = measurament.tilt ;
-	bufferDisp[0].orientation = measurament.orientation ;
+	//bufferDisp[0].orientation = measurament.orientation ;
 }
 
 
 Measurement normalize(rawdata_t accel,rawdata_t magnet){
+
 	Measurement m;
 
-	float normalize = sqrt(accel.x*accel.x+accel.y*accel.y+accel.z*accel.z); // suma de los cuadrados. Modulo
+    // Calcular la magnitud de la aceleración (norma)
+    float normalize = sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
 
-	accel.y/=normalize;
-	accel.x/=normalize;
-	accel.z/=normalize;
+    // Normalizar los valores de aceleración
+    accel.x /= normalize;
+    accel.y /= normalize;
+    accel.z /= normalize;
 
-	m.rolling=(int)((180/3.1415)*atan2(accel.y,sqrt(accel.x*accel.x+accel.z*accel.z)));//conversion de radianes a grados
-	m.tilt=(int)((180/3.1415)*atan2(accel.x,sqrt(accel.y*accel.y+accel.z*accel.z)));
+    // Calcular el ángulo de inclinación (tilt) en grados
+    m.rolling = (int)(atan2(accel.x, sqrt(accel.y * accel.y + accel.z * accel.z)) * (180.0 / M_PI));
 
-	return m;
+    // Calcular el ángulo de balanceo (roll) en grados
+    m.tilt = (int)(atan2(accel.y, accel.z) * (180.0 / M_PI));
+
+    // Ajustar los ángulos al rango de -179° a 180°
+    if (m.tilt > 180) {
+        m.tilt -= 360;
+    } else if (m.tilt < -179) {
+        m.tilt += 360;
+    }
+
+    if (m.rolling > 180) {
+        m.rolling -= 360;
+    } else if (m.rolling < -179) {
+        m.rolling += 360;
+    }
+
+    return m;
 }
+
+
 
 
 

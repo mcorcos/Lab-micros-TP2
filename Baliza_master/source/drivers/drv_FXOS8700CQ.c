@@ -46,7 +46,7 @@
 
 
 //Conversiones
-#define ACC_CONVERSION	(0.000488)		//G
+#define ACC_CONVERSION	(0.000488)		//0.488 mG/LSB or 1/2048
 #define	MAG_CONVERSION	(0.1)		//uT
 
  /*******************************************************************************
@@ -103,7 +103,7 @@ SENSOR_CONTROL configSensor(void){
     // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
     i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ);
 
-    for (i = 0; i < 1000000; i++) {
+    for (i = 0; i < 10000000; i++) {
         // Este bucle creará un retraso aproximado de 1 segundo
     }
 
@@ -192,7 +192,7 @@ SENSOR_CONTROL configSensor(void){
     i2cSensor.status = WORKING;
 
 
-    // Voy a hacer el Enable del pin de Data Ready que esta en el REG4 del chip
+   /* // Voy a hacer el Enable del pin de Data Ready que esta en el REG4 del chip
 
 	databyte=DATA_READY_ENABLE;
 
@@ -230,7 +230,7 @@ SENSOR_CONTROL configSensor(void){
 		}
 
     }
-    i2cSensor.status = WORKING;
+    i2cSensor.status = WORKING;*/
 
 
     /* write 0000 0001= 0x01 to XYZ_DATA_CFG register
@@ -278,8 +278,8 @@ SENSOR_CONTROL configSensor(void){
     }
     //Voy a setear el pin PC13 como entradad de interrupciones (active low default)
 
-    gpioMode (PIN_INT2_FXOS8700XQ, INPUT);
-    gpioIRQ (PIN_INT2_FXOS8700XQ, PORT_eInterruptFalling, dataIsReady);
+    //gpioMode (PIN_INT2_FXOS8700XQ, INPUT);
+   //gpioIRQ (PIN_INT2_FXOS8700XQ, PORT_eInterruptFalling, dataIsReady);
 
     i2cSensor.status = SENSOR_INITIALIZED; //El sensor esta preparado para ser usado
 
@@ -312,9 +312,9 @@ void callbackRead(void){ //Funcion llamada desde el i2cCommunications. pasa los 
 	int16_t magnetYAxis = (buffer[9] << 8) | buffer[10];
 	int16_t magnetZAxis = (buffer[11] << 8) | buffer[12];
 
-	accelerometer.x =accelerometerXAxis*ACC_CONVERSION; //cargo los datos raw en accel y magnet
-	accelerometer.y =accelerometerYAxis*ACC_CONVERSION;
-	accelerometer.z =accelerometerZAxis*ACC_CONVERSION;
+	accelerometer.x =accelerometerXAxis; //cargo los datos raw en accel y magnet
+	accelerometer.y =accelerometerYAxis;
+	accelerometer.z =accelerometerZAxis;
 	magnet.x = magnetXAxis*MAG_CONVERSION;
 	magnet.y = magnetYAxis*MAG_CONVERSION;
 	magnet.z = magnetZAxis*MAG_CONVERSION;
@@ -339,7 +339,7 @@ void ReadAccelMagnData(void)
 	if(i2cSensor.status != WORKING ){ // bloqueante, espero a que el mensaje anterior se termine de desarrollar
 		i2cSensor.status = WORKING ;
 		loadCallback(callbackRead);
-		i2cCommunicationHandler( FXOS8700CQ_OUT_X_MSB, buffer,FXOS8700CQ_READ_LEN,I2C_READ);
+		i2cCommunicationHandler( FXOS8700CQ_STATUS, buffer,FXOS8700CQ_READ_LEN,I2C_READ);
 
 	}
 

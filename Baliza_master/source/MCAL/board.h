@@ -118,7 +118,7 @@
 #define INTERRUPT_ROUTED_INT2 0b00000000
 
 // number of bytes to be read from the FXOS8700CQ
-#define FXOS8700CQ_READ_LEN 	12
+#define FXOS8700CQ_READ_LEN 	13
 
 
 

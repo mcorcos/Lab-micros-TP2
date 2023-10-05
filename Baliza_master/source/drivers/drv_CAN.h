@@ -26,10 +26,10 @@
  ******************************************************************************/
 typedef struct
 {
-	uint16_t boardID;
-	uint8_t rolling;
-	uint8_t tilt;
-	uint8_t orientation;
+	int16_t boardID;
+	int16_t rolling;
+	int16_t tilt;
+	int16_t orientation;
 }Measurement;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
