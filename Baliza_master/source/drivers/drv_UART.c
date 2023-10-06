@@ -18,7 +18,7 @@
 
 #define DEFAULT_ID 0
 
-#define SIZE_OF_PACKAGE 2
+#define SIZE_OF_PACKAGE 4 // tiene q ser un sizeofPackage
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/

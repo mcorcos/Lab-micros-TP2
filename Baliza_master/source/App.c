@@ -92,7 +92,7 @@ void updateDispositives(void);
 void updateMessage4CPU(uint8_t i);
 void initBuffer(void);
 Measurement normalize(rawdata_t accel,rawdata_t magnet);
-
+void byteToChars(unsigned char byte, uint8_t *result);
 void receiveBoardsPos(void);
 void sendPos2Boards(void);
 /*******************************************************************************
@@ -126,7 +126,7 @@ void App_Init (void)
 
 
     timerStart(timerTx, TIMER_MS2TICKS(TIMER_TX_MS), TIM_MODE_PERIODIC, callbackTimerTx); //info para los timers
-    timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
+   // timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
 
     initDispositives(); //init a la info de las placas
     initBuffer(); // init para los buffers con valor dummy
@@ -170,37 +170,41 @@ void updateDispositives(void){  //Actualizo la informacion de los buffers hacia 
 
 void updateMessage4CPU(uint8_t i){
 	message4CPU[i][0].dataType[0] = 'I';//poner el ID
-	message4CPU[i][0].value = i+'0'; //poner el value
+	byteToChars( i ,message4CPU[i][0].value);
 
 	if(dispositives[i].rolling >= 0){
 		message4CPU[i][1].dataType[0] = '+';//poner el + o -
-		message4CPU[i][1].value = dispositives[i].rolling;
+		byteToChars( dispositives[i].rolling,message4CPU[i][1].value );
 	}
 	else{
 		message4CPU[i][1].dataType[0] = '-';//poner el + o -
-		message4CPU[i][1].value = (-1) * dispositives[i].rolling;
+		byteToChars((-1) * dispositives[i].rolling,message4CPU[i][1].value );
 	}
 
 	if(dispositives[i].tilt >= 0){
 		message4CPU[i][2].dataType[0] = '+';//poner el + o -
-		message4CPU[i][2].value = dispositives[i].tilt;
+		byteToChars( dispositives[i].tilt,message4CPU[i][2].value );
+
 	}
 	else{
 		message4CPU[i][2].dataType[0] = '-';//poner el + o -
-		message4CPU[i][2].value = (-1) * dispositives[i].tilt;
+		byteToChars( (-1) *dispositives[i].tilt,message4CPU[i][2].value );
+
 	}
 
 	if(dispositives[i].orientation >= 0){
 		message4CPU[i][3].dataType[0] = '+';//poner el + o -
-		message4CPU[i][3].value = dispositives[i].orientation;
+		byteToChars( dispositives[i].orientation ,message4CPU[i][3].value);
 	}
 	else{
 		message4CPU[i][3].dataType[0] = '-';//poner el + o -
-		message4CPU[i][3].value = (-1) * dispositives[i].orientation;
+		byteToChars( (-1) * dispositives[i].orientation ,message4CPU[i][3].value);
 	}
 
 	message4CPU[i][4].dataType[0] = 'T'; // T de terminador
-	message4CPU[i][4].value = '\n'; // Pongo el terminador para que la aplicacion sepa que termino el msg !
+	message4CPU[i][4].value[0] = '\n';// Pongo el terminador para que la aplicacion sepa que termino el msg !
+	message4CPU[i][4].value[1] = '\n';
+	message4CPU[i][4].value[2] = '\n';
 }
 
 void initDispositives(void){ // inicio los ids  de los dispositives
@@ -276,6 +280,9 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
     // Calcular el ángulo de inclinación (tilt) en grados
     m.rolling = (int)(atan2(accel.x, sqrt(accel.y * accel.y + accel.z * accel.z)) * (180.0 / M_PI));
 
+
+
+
     // Calcular el ángulo de balanceo (roll) en grados
     m.tilt = (int)(atan2(accel.y, accel.z) * (180.0 / M_PI));
 
@@ -285,6 +292,20 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
     } else if (m.tilt < -179) {
         m.tilt += 360;
     }
+
+
+    if(accel.x>0){
+    	if(accel.z<0){
+    		m.rolling = 90 + (90 - m.rolling);
+    	}
+    }
+    if(accel.x<0){
+    	if(accel.z<0){
+    		m.rolling = -90 + (-90 - m.rolling);
+    	}
+    }
+
+
 
     if (m.rolling > 180) {
         m.rolling -= 360;
@@ -297,5 +318,21 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
 
 
 
+void byteToChars(unsigned char byte, uint8_t *result) {
+    if (byte > 99) {
+        result[0] = '0' + (byte / 100);        // Obtener el dígito más significativo
+        result[1] = '0' + ((byte % 100) / 10); // Obtener el segundo dígito
+        result[2] = '0' + (byte % 10);         // Obtener el dígito menos significativo
+    } else {
+        result[0] = '0';
+        if (byte > 9) {
+            result[1] = '0' + (byte / 10);
+            result[2] = '0' + (byte % 10);
+        } else {
+            result[1] = '0';
+            result[2] = '0' + byte;
+        }
+    }
+}
 
 
