@@ -31,6 +31,8 @@
 
 //TIMERS MS DEFINE
 #define TIMER_TX_MS 10
+#define TIMER_EVERY1500_MS 1500
+#define TIMER_UPDATE_MS 50
 #define TIMER_RX_MS 100
 
 
@@ -63,6 +65,10 @@ static Measurement measurament;
 //Para chequear si se ingreso algo por teclado.
 static tim_id_t timerTx;
 static tim_id_t timerRx;
+static tim_id_t timerCanEvery1500mSecTx;
+static tim_id_t timerCanUpdateMovement_R_Tx;
+static tim_id_t timerCanUpdateMovement_C_Tx;
+//static tim_id_t timerCanUpdateMovement_O_Tx;
 
 
 //Dispositives es el arreglo de informacion donde se guarda la info de las placas, y el mismo se manda a la cpu por medio de msg4CPU
@@ -74,6 +80,12 @@ static dispositive_t bufferDisp[CANT_DISP];
 //Mensaje que se envia a la computadora por UART
 static package_t message4CPU[CANT_DISP][CANT_PACKAGE+1]; // +1 its used to add '/n'
 static package_t * messagePointer = &(message4CPU[0][0]);
+
+
+static packageCan_t canPackageTx[3];
+static packageCan_t tempPackage; //temporal para enviat
+static int16_t currentPackage; //temporal para enviat
+static int16_t previousPackage; //temporal para enviat
 
 
 static bool sensorInit = false;
@@ -95,6 +107,13 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet);
 void byteToChars(unsigned char byte, uint8_t *result);
 void receiveBoardsPos(void);
 void sendPos2Boards(void);
+void preparePackage(Measurement measurament);
+void sendCompletePackageCan(void);
+void sendUpdatedPackageCan_R_(void);
+void sendUpdatedPackageCan_C_(void);
+int16_t charsToInt16(char chars[3], char signo)
+//void sendUpdatedPackageCan_O_(void);
+
 /*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
@@ -112,10 +131,18 @@ void App_Init (void)
 	initUART(); //Init UART
 	initI2c();
 	initBoardsCan();
+	SENSOR_CONTROL sensorStatus = initSensor();
 
-	if(initSensor() == SENSOR_INITIALIZED){
+	while(!sensorInit){
 
-		sensorInit = false;
+		if(sensorStatus == SENSOR_INITIALIZED){
+			sensorInit = true;
+		}
+		else{
+			initI2c();
+			sensorStatus = initSensor();
+		}
+
 	}
 
 
@@ -123,9 +150,16 @@ void App_Init (void)
 	//inicio los timers de UART
 	timerTx = timerGetId();
 	timerRx = timerGetId();
-
+	timerCanEvery1500mSecTx = timerGetId();
+	timerCanUpdateMovement_R_Tx = timerGetId();
+	timerCanUpdateMovement_C_Tx = timerGetId();
 
     timerStart(timerTx, TIMER_MS2TICKS(TIMER_TX_MS), TIM_MODE_PERIODIC, callbackTimerTx); //info para los timers
+    timerStart(timerCanEvery1500mSecTx, TIMER_MS2TICKS(TIMER_EVERY1500_MS), TIM_MODE_PERIODIC, sendCompletePackageCan); //info para los timers
+    timerStart(timerCanUpdateMovement_R_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_R_); //info para los timers
+    timerStart(timerCanUpdateMovement_C_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_C_); //info para los timers
+   // timerStart(timerCanUpdateMovement_O_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_O_); //info para los timers
+
    // timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
 
     initDispositives(); //init a la info de las placas
@@ -137,13 +171,12 @@ void App_Run (void)
 {
 
 	// updateo las posiciones de mi placa y de las demas
-	updateDispositives();
-	if(getStatus() == FINISHED){
-		sendPos2Boards();
-	}
+	//updateDispositives();
+	sendPos2Boards();
+
 
 	ReadAccelMagnData();
-	//receiveBoardsPos();
+	receiveBoardsPos();
 
 
 
@@ -242,21 +275,27 @@ void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 void receiveBoardsPos(void){
 
-	receiveCAN(measurament);
-	uint8_t id = measurament.boardID;
 
+	receiveCAN(&measurament);
+	uint8_t id  = measurament.boardID;
+
+	id = id - 256;
+
+
+
+	//Estaria bueno que se haga dentro de una funcion que se llama parsePackage() y ahi usar la funcion charsToInt16
 	bufferDisp[id].rolling = measurament.rolling;
 	bufferDisp[id].tilt = measurament.tilt;
 	bufferDisp[id].orientation = measurament.orientation;
 
 }
-void sendPos2Boards(void){
+void sendPos2Boards(void){ //antes aca se enviaba Can, queda cambiarle el nombre a la funcion como "update my boards position"
 
 	rawdata_t accel = getAccData();
 	rawdata_t magnet = getMagData();
 
 	measurament = normalize(accel , magnet);
-	//sendCan(measurament);
+	preparePackage(measurament);
 
 	//Updateo los datos de mi placa (bufferDisp[0])
 	bufferDisp[0].rolling = measurament.rolling ;
@@ -333,6 +372,140 @@ void byteToChars(unsigned char byte, uint8_t *result) {
             result[2] = '0' + byte;
         }
     }
+}
+
+
+
+void preparePackage(Measurement measurament){
+
+
+	canPackageTx[0].dataType[0] = 'R';
+
+	if(measurament.rolling>=0){
+		canPackageTx[0].sign = '+';
+		byteToChars(measurament.rolling , canPackageTx[0].value);
+
+	}
+	else{
+		canPackageTx[0].sign  = '-' ;
+		byteToChars((-1)*measurament.rolling , canPackageTx[0].value);
+
+	}
+
+
+
+	canPackageTx[1].dataType[0] = 'C';
+
+	if(measurament.tilt>=0){
+		canPackageTx[1].sign  = '+';
+		byteToChars(measurament.tilt , canPackageTx[1].value);
+	}
+	else{
+		canPackageTx[1].sign  = '-' ;
+		byteToChars((-1)*measurament.tilt , canPackageTx[1].value);
+	}
+
+
+
+}
+
+
+void sendCompletePackageCan(void){
+
+
+
+	tempPackage.dataType[0] = canPackageTx[0].dataType[0]; //Mando el primero
+	tempPackage.sign = canPackageTx[0].sign;
+	tempPackage.value[0] = canPackageTx[0].value[0];
+	tempPackage.value[1] = canPackageTx[0].value[1];
+	tempPackage.value[2] = canPackageTx[0].value[2];
+
+	sendCan(&tempPackage);
+
+	tempPackage.dataType[0] = canPackageTx[1].dataType[0]; //Mando el segundo
+	tempPackage.sign = canPackageTx[1].sign;
+	tempPackage.value[0] = canPackageTx[1].value[0];
+	tempPackage.value[1] = canPackageTx[1].value[1];
+	tempPackage.value[2] = canPackageTx[1].value[2];
+
+	sendCan(&tempPackage);
+
+
+
+
+
+
+}
+
+void sendUpdatedPackageCan_R_(void){
+
+
+	currentPackage = bufferDisp[0].rolling ;
+
+
+	if(previousPackage != currentPackage){
+
+		previousPackage = bufferDisp[0].rolling ;
+
+
+		tempPackage.dataType[0] = canPackageTx[0].dataType[0]; //Mando el primero
+		tempPackage.sign = canPackageTx[0].sign;
+		tempPackage.value[0] = canPackageTx[0].value[0];
+		tempPackage.value[1] = canPackageTx[0].value[1];
+		tempPackage.value[2] = canPackageTx[0].value[2];
+		sendCan(&tempPackage);
+
+	}
+
+
+}
+
+
+void sendUpdatedPackageCan_C_(void){
+
+
+
+
+	currentPackage = bufferDisp[0].tilt;;
+
+
+	if(previousPackage != currentPackage){
+
+		previousPackage = bufferDisp[0].tilt; ;
+
+
+		tempPackage.dataType[0] = canPackageTx[1].dataType[0]; //Mando el segundo
+		tempPackage.sign = canPackageTx[1].sign;
+		tempPackage.value[0] = canPackageTx[1].value[0];
+		tempPackage.value[1] = canPackageTx[1].value[1];
+		tempPackage.value[2] = canPackageTx[1].value[2];
+
+		sendCan(&tempPackage);
+
+	}
+
+}
+
+/*
+void sendUpdatedPackageCan_O_(void){
+
+
+	sendCan(canPackageTx);
+
+
+}*/
+
+
+int16_t charsToInt16(char chars[3], char signo) {
+    // Convierte los caracteres a un número entero
+    int16_t valor = ((chars[0] - '0') * 100) + ((chars[1] - '0') * 10) + (chars[2] - '0');
+
+    // Aplica el signo
+    if (signo == '-') {
+        valor = -valor;
+    }
+
+    return valor;
 }
 
 

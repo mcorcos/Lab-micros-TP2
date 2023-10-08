@@ -67,8 +67,8 @@
 
 //CAN
 
-#define CAN0_RX_PIN	PIN_PTB_18
-#define CAN0_TX_PIN PIN_PTB_19
+#define CAN0_RX_PIN	PIN_PTB_19
+#define CAN0_TX_PIN PIN_PTB_18
 
 
 //I2C

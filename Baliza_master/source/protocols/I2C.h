@@ -60,7 +60,8 @@ typedef enum{
 typedef enum{
 	I2C_FAULT_BUS_BUSY,
 	I2C_FAULT_NO_ACK,
-	I2C_FAULT_NO_FAULT
+	I2C_FAULT_NO_FAULT,
+	I2C_FAULT_ARB_LOST
 }I2C_FAULT;
 
 
@@ -111,6 +112,7 @@ void i2cLoadCallback(ptrToFun callback_);
 
 I2C_FAULT getFault(void);
 
+void restart(void);
  
 #endif // _I2C_H_
  

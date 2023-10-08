@@ -82,10 +82,8 @@ void dataIsReady(void);
 
 SENSOR_CONTROL initSensor(void){
 	//configuracion del sensor
-	SENSOR_CONTROL sensor = configSensor();
-/*	//Create a timer
-	timerInit();
-	tim_id_t timer = timerGetId();*/
+	SENSOR_CONTROL sensor1 = configSensor();
+	return sensor1;
 }
 
 
@@ -103,7 +101,7 @@ SENSOR_CONTROL configSensor(void){
     // 				slave address to write , slave intern register to W or R , tamanio  , READ/WRITE , Ptr to Fun
     i2cCommunicationHandler(FXOS8700CQ_WHOAMI,&databyte,(uint8_t)1,I2C_READ);
 
-    for (i = 0; i < 10000000; i++) {
+    for (i = 0; i < 1000000; i++) {
         // Este bucle creará un retraso aproximado de 1 segundo
     }
 
@@ -113,6 +111,8 @@ SENSOR_CONTROL configSensor(void){
 		{
 			return (SENSOR_ERROR);
 		}
+
+
 
     }
     i2cSensor.status = WORKING;

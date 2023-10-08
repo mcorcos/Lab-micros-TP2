@@ -29,7 +29,7 @@ void configureCANClock(canConfig_t * config);
  void defaultCANConfig(canConfig_t * config);
  void configureIndivRxMask(void);
 
-
+ static canFrame_t frameRx;
  static ptrToFunction callbacks[CAN_ID_COUNT];
 
 /*******************************************************************************
@@ -48,22 +48,30 @@ void configureCANClock(canConfig_t * config);
 		while(((CAN0->MCR)&CAN_MCR_SOFTRST_MASK)!= CAN_MCR_SOFTRST_MASK); // wait until achieves soft reset
 
 		PORT_Type * PORTS[] = PORT_BASE_PTRS; //CONFIGURA MUX OF PORTB18 & PORTB19 as CANBUS
-		PORTS[PIN2PORT(CAN0_RX_PIN)]->PCR[PIN2NUM(CAN0_RX_PIN)] = PORT_PCR_MUX(PORT_mAlt2); // configuration of ports to CAN
-		PORTS[PIN2PORT(CAN0_TX_PIN)]->PCR[PIN2NUM(CAN0_TX_PIN)] = PORT_PCR_MUX(PORT_mAlt2);
+		PORTS[PIN2PORT(CAN0_RX_PIN)]->PCR[PIN2NUM(CAN0_RX_PIN)] = PORT_PCR_MUX(PORT_mAlt2) |PORT_PCR_PE_MASK |PORT_PCR_PS_MASK; // configuration of ports to CAN
+		PORTS[PIN2PORT(CAN0_TX_PIN)]->PCR[PIN2NUM(CAN0_TX_PIN)] = PORT_PCR_MUX(PORT_mAlt2) |PORT_PCR_PE_MASK | PORT_PCR_PS_MASK;
 
 		disableCAN(); //Disable CAN for write into CTR1 and MCR  the clock config
-		configureCANClock(config); // PLL clock or Crystal Clock
+
 
 		enableCAN(); // Enable CAN
+
 		while((CAN0->MCR & CAN_MCR_FRZACK_MASK)!=CAN_MCR_FRZACK_MASK); //wait til CAN freezes . it enters freezing bc SoftStart resets FRZ and HLT to 1
+
+		CAN0->CTRL1 = 0;
+		CAN0->CTRL1 |= CAN_CTRL1_PROPSEG(1) | CAN_CTRL1_PRESDIV(48)
+		 					| CAN_CTRL1_PSEG1(2) | CAN_CTRL1_PSEG2(1) | CAN_CTRL1_RJW(0)
+		 					| CAN_CTRL1_LBUF(0);
+		//CAN0->CTRL2 = 0xb40000;
+		//CAN0->TIMER = 0x7;
 
 		//configureIndivRxMask();
 
 		for(int i=0; i<CAN_ID_COUNT; i++){ // Buffers reset
-			CAN0->MB[i].CS = ( CAN0->MB[i].CS &= ~CAN_CS_CODE_MASK ); // Limpio la informacion preexistente en esa posicion
-			CAN0->MB[i].CS |= CAN_CS_CODE(INACTIVE_RX); // Code set
-			CAN0->MB[i].ID = CAN_ID_STD(0); // id = 0
-			CAN0->RXIMR[i] = 0xFFFFFFFF; // Masks RESET
+			//CAN0->MB[i].CS = ( CAN0->MB[i].CS &= ~CAN_CS_CODE_MASK ); // Limpio la informacion preexistente en esa posicion
+			//CAN0->MB[i].CS |= CAN_CS_CODE(INACTIVE_RX); // Code set
+			//CAN0->MB[i].ID = CAN_ID_STD(0); // id = 0
+			//CAN0->RXIMR[i] = 0xFFFFFFFF; // Masks RESET
 		}
 
 
@@ -106,12 +114,8 @@ void configureCANClock(canConfig_t * config);
 
  void configureCANClock(canConfig_t * config){
 
-	 if( config->clock == CAN_OSC_CLOCK){
-		 CAN0->CTRL1 = CAN_CTRL1_CLKSRC(0);
-	 }
-	 else if( config->clock == CAN_PERIPHERAL_CLOCK){
-		 CAN0->CTRL1 = CAN_CTRL1_CLKSRC(1);
-	 }
+
+
 
  }
 
@@ -132,16 +136,16 @@ void configureIndivRxMask(void){
 
 void  configRxMB( uint8_t mb_id, uint32_t ID){
 	/// inactivate Mailbox
-	CAN0->MB[mb_id].CS = ( CAN0->MB[mb_id].CS &= ~CAN_CS_CODE_MASK ) | CAN_CS_CODE(INACTIVE_RX);
+	//CAN0->MB[mb_id].CS = ( CAN0->MB[mb_id].CS &= ~CAN_CS_CODE_MASK ) | CAN_CS_CODE(INACTIVE_RX);
 
 	///Pongo el ID
 	CAN0->MB[mb_id].ID = CAN_ID_STD(ID);
 
 	/// Write the EMPTY code to the CODE field of the Control and Status word to activate the Mailbox.
-	CAN0->MB[mb_id].CS = CAN_CS_CODE(EMPTY_RX) | CAN_CS_IDE(0);
+	CAN0->MB[mb_id].CS = CAN_CS_CODE(EMPTY_RX);
 }
 
-uint8_t transmitCan(uint8_t MB_ID,canFrame_t frame){
+uint8_t transmitCan(uint8_t MB_ID,canFrame_t *frame){
 
 
 	/// check if IFLAG its asserted and write 1 to clear it
@@ -150,31 +154,30 @@ uint8_t transmitCan(uint8_t MB_ID,canFrame_t frame){
 
 
 	//write ID
-	CAN0->MB[MB_ID].ID = CAN_ID_STD(frame.ID);
+	CAN0->MB[MB_ID].ID = CAN_ID_STD(frame->ID);
 
 	/// Write INACTIVE
 	CAN0->MB[MB_ID].CS = CAN_CS_CODE(INACTIVE_TX);
 
 	// Write data bytes
-	CAN0->MB[MB_ID].WORD0 = CAN_WORD0_DATA_BYTE_0(frame.dataByte0) |
-	                    	CAN_WORD0_DATA_BYTE_1(frame.dataByte1) |
-	                    	CAN_WORD0_DATA_BYTE_2(frame.dataByte2) |
-	                    	CAN_WORD0_DATA_BYTE_3(frame.dataByte3);
-	CAN0->MB[MB_ID].WORD1 = CAN_WORD1_DATA_BYTE_4(frame.dataByte4) |
-	                        CAN_WORD1_DATA_BYTE_5(frame.dataByte5) |
-	                    	CAN_WORD1_DATA_BYTE_6(frame.dataByte6) |
-	                    	CAN_WORD1_DATA_BYTE_7(frame.dataByte7);
-
+	CAN0->MB[MB_ID].WORD0 = CAN_WORD0_DATA_BYTE_0(frame->dataByte0) |
+	                    	CAN_WORD0_DATA_BYTE_1(frame->dataByte1) |
+	                    	CAN_WORD0_DATA_BYTE_2(frame->dataByte2) |
+	                    	CAN_WORD0_DATA_BYTE_3(frame->dataByte3);
+	CAN0->MB[MB_ID].WORD1 = CAN_WORD1_DATA_BYTE_4(frame->dataByte4) |
+	                        CAN_WORD1_DATA_BYTE_5(frame->dataByte5) |
+	                    	CAN_WORD1_DATA_BYTE_6(frame->dataByte6) |
+	                    	CAN_WORD1_DATA_BYTE_7(frame->dataByte7);
 
 	//write code and length
-	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX);
-	CAN0->MB[MB_ID].CS |= CAN_CS_DLC(frame.length);
+
+	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX) |  CAN_CS_DLC(frame->length);
 
 	return TRANSMIT_OK;
 }
 
 
-STATUS_READ readCAN(uint8_t MB_ID, canFrame_t frame){
+STATUS_READ readCAN(uint8_t MB_ID, canFrame_t *frame){
 
 	uint8_t return_value;
 
@@ -192,19 +195,19 @@ STATUS_READ readCAN(uint8_t MB_ID, canFrame_t frame){
 
 		//Si esta full
 		case FULL_RX:
-			frame.ID = (CAN0->MB[MB_ID].ID & CAN_ID_STD_MASK)>>CAN_ID_STD_SHIFT;
+			frame->ID = (CAN0->MB[MB_ID].ID & CAN_ID_STD_MASK)>>CAN_ID_STD_SHIFT;
 
-			frame.dataWord0 =  ((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_0_MASK)>>24)|
+			frame->dataWord0 =  ((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_0_MASK)>>24)|
 								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_1_MASK)>>8)|
 								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_2_MASK)<<8)|
 								((CAN0->MB[MB_ID].WORD0 & CAN_WORD0_DATA_BYTE_3_MASK)<<24);
 
-			frame.dataWord1 =  ((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_4_MASK)>>24)|
+			frame->dataWord1 =  ((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_4_MASK)>>24)|
 								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_5_MASK)>>8)|
 								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_6_MASK)<<8)|
 								((CAN0->MB[MB_ID].WORD1 & CAN_WORD1_DATA_BYTE_7_MASK)<<24);
 
-			frame.length = (CAN0->MB[MB_ID].CS & CAN_CS_DLC_MASK) >> CAN_CS_DLC_SHIFT;
+			frame->length = (CAN0->MB[MB_ID].CS & CAN_CS_DLC_MASK) >> CAN_CS_DLC_SHIFT;
 
 			// Write the EMPTY code (0b0100) to the CODE
 			CAN0->MB[MB_ID].CS = CAN_CS_CODE(EMPTY_RX);
@@ -229,9 +232,10 @@ STATUS_READ readCAN(uint8_t MB_ID, canFrame_t frame){
 
 
 
+
 void CAN0_ORed_Message_buffer_IRQHandler(void){
 
-	canFrame_t frame;
+
 
 
 	for(int i=0; i<CAN_ID_COUNT; i++)
@@ -240,8 +244,12 @@ void CAN0_ORed_Message_buffer_IRQHandler(void){
 		{
 			if(((CAN0->MB[i].CS&CAN_CS_CODE_MASK)>>CAN_CS_CODE_SHIFT)==FULL_RX) //Cuando un MB este lleno , descargalo
 			{
-				CAN_STATUS s = readCAN(i,frame);
-				callbacks[i](frame);
+				frameRx.dataWord0 = 0x00000000;
+				frameRx.dataWord1 = 0x00000000;
+
+				CAN_STATUS s = readCAN(i,&frameRx);
+				callbacks[i](&frameRx);
+
 			}
 		}
 	}

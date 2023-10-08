@@ -316,7 +316,11 @@ static bool i2cEndCommunication( I2C_FAULT fault_){
 
 
 __ISR__ I2C0_IRQHandler (void){
-	if(I2C0->S & I2C_S_TCF_MASK ){
+	if(I2C0->S & I2C_S_ARBL_MASK ){
+		I2C0->S |= I2C_S_ARBL_MASK;
+		restart();
+	}
+	else if(I2C0->S & I2C_S_TCF_MASK ){
 		i2cCommunication();
 	}
 }
@@ -327,3 +331,8 @@ I2C_FAULT getFault(void){
 	return isrI2cConfig.fault;
 }
 
+
+
+void restart(void){
+	isrI2cConfig.fault = I2C_FAULT_ARB_LOST;
+}

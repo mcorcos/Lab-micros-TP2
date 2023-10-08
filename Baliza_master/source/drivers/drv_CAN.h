@@ -31,6 +31,14 @@ typedef struct
 	int16_t tilt;
 	int16_t orientation;
 }Measurement;
+
+typedef struct{
+ 	char dataType[1]; // el identificador
+ 	char sign;
+ 	uint8_t value[3]; // el valor  ... 255 -> '2' '5' '5'
+ 					//  valor , valor 2 , cal
+
+ }packageCan_t;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -40,7 +48,7 @@ typedef struct
  ******************************************************************************/
 
 CAN_STATUS initBoardsCan(void);
-uint8_t receiveCAN(Measurement measurements);
-uint8_t sendCan(Measurement measurements);
+uint8_t receiveCAN(Measurement *measurements);
+uint8_t sendCan( packageCan_t * package);
  
 #endif /*  DRIVERS_DRV_CAN_H_ */

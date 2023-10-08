@@ -28,7 +28,7 @@
 
 #define MAX_BYTES 8
 
-#define MY_ID (0b100000) //32
+#define MY_ID (0x104) //104
 #define MY_MB_INDEX 0
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -116,7 +116,7 @@ typedef struct{
 
 
 
- typedef void (*ptrToFunction)(canFrame_t frame);
+ typedef void (*ptrToFunction)(canFrame_t* frame);
 
 
 /*******************************************************************************
@@ -155,13 +155,13 @@ typedef struct{
   * @brief transmit CAN Message Buffer
   *
   */
- uint8_t transmitCan(uint8_t MB_ID,canFrame_t frame);
+ uint8_t transmitCan(uint8_t MB_ID,canFrame_t *frame);
  
  /**
   * @brief read CAN Message Buffer
   *
   */
- STATUS_READ readCAN(uint8_t MB_ID, canFrame_t frame);
+ STATUS_READ readCAN(uint8_t MB_ID, canFrame_t *frame);
  
  /**
    * @brief
