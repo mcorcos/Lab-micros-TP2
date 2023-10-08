@@ -1,6 +1,6 @@
 /***************************************************************************//**
-  @file     board.h
-  @brief    Board management
+  @file     drv_CAN.c
+  @brief    Driver for CAN protocol
   @author   G4
  ******************************************************************************/
 
@@ -15,6 +15,8 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 #define BASE_ID 256
+#define IS_ID_OK(id) (((id)>0x107)&&((id)>=0x100)&&((id)!=0x104))
+
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -23,63 +25,57 @@
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 static canFrame_t MbBuffer[CAN_ID_COUNT];
-static uint8_t iterator  = 0 ;
-void callback(canFrame_t *frame);
+void callback(canFrame_t *frame, CAN_STATUS s);
 static 	canFrame_t frameTx;
+
+/*******************************************************************************
+ * FUNCTION PROTOTYPES WITH LOCAL SCOPE
+ ******************************************************************************/
+void parsePackage(Measurement *measurements, uint8_t idx_mb_buffer);
+int16_t charsToInt16(uint32_t length, uint8_t *chars);
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
  
 CAN_STATUS initBoardsCan(void){
 
-
 	canConfig_t config;
 
 	defaultCANConfig(&config);
-
 
 	if(initCAN(&config)!=CAN_READY){
 		return CAN_ERR;
 	}
 
-	configRxMB(MY_MB_INDEX  ,MY_ID );
-	enableCanInterrup( MY_MB_INDEX ,callback);
+	configRxMB(0, 0x100);
+	enableCanInterrup(0, callback);
 
-	configRxMB(MY_MB_INDEX +1 ,MY_ID + 1);
-	enableCanInterrup( MY_MB_INDEX +1,callback);
+	configRxMB(1 , 0x101);
+	enableCanInterrup(1, callback);
 
-	configRxMB(MY_MB_INDEX +2 ,MY_ID +2 );
-	enableCanInterrup( MY_MB_INDEX+2 ,callback);
+	configRxMB(2, 0x102 );
+	enableCanInterrup(2, callback);
+
+	configRxMB(3, 0x103);
+	enableCanInterrup(3, callback);
+
+	configRxMB(4, 0x104);
+	enableCanInterrup(4, callback);
+
+	configRxMB(5, 0x105);
+	enableCanInterrup(5, callback);
+
+	configRxMB(6, 0x106);
+	enableCanInterrup(6, callback);
 
 
-	configRxMB(MY_MB_INDEX +4 ,MY_ID - 1);
-	enableCanInterrup( MY_MB_INDEX +4,callback);
-
-	configRxMB(MY_MB_INDEX +5 ,MY_ID -2 );
-	enableCanInterrup( MY_MB_INDEX+5 ,callback);
-
-	configRxMB(MY_MB_INDEX +6 ,MY_ID -3);
-	enableCanInterrup( MY_MB_INDEX +6,callback);
-
-	configRxMB(MY_MB_INDEX +7 ,MY_ID -4);
-	enableCanInterrup( MY_MB_INDEX +7,callback);
+	return CAN_READY;
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
  uint8_t sendCan(packageCan_t *package){
-
-
 
 	 frameTx.ID  = 0x104;
 
@@ -100,39 +96,69 @@ CAN_STATUS initBoardsCan(void){
 	else{
 		return CAN_TRANSMIT_FAIL;
 	}
-
-
  }
 
 
  uint8_t receiveCAN(Measurement *measurements){
-
-
-
-	measurements->boardID = MbBuffer[iterator++].ID;
-	measurements->rolling = MbBuffer[iterator++].dataByte0; //dummy , desp hay q igualar todo bien
-	measurements->tilt = MbBuffer[iterator++].dataByte0;
-	measurements->orientation = MbBuffer[iterator++].dataByte0;
-
-
-
-	if(iterator == CAN_ID_COUNT ){
-		iterator = 0;
-
-	}
-
-	return CAN_RECEIVE_OK;
-
-
+	 uint8_t idx_mb_buffer = 0;
+	 for(;idx_mb_buffer <= CAN_ID_COUNT; idx_mb_buffer++){
+		 if(IS_ID_OK(MbBuffer[idx_mb_buffer].ID)){
+		 		 //Para obtener el ID en formato de uint16_t y con valores de una unidad se le resta 256 para normalizarlo
+		 		 measurements->boardID = MbBuffer[idx_mb_buffer].ID - (0x100);
+		 		 parsePackage(measurements, idx_mb_buffer);
+		 }
+	 }
+	 return CAN_RECEIVE_OK;
  }
 
 
- void callback(canFrame_t *frame){
 
-	 uint16_t id = frame->ID - BASE_ID;
+ void parsePackage(Measurement *measurements, uint8_t idx_mb_buffer){
+	 uint8_t angleID = MbBuffer[idx_mb_buffer].dataByte0;
+	 switch(angleID){
+	 	 case 'R':
+	 		measurements->rolling = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		break;
+	 	 case 'C':
+	 		measurements->tilt = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		break;
+	 	 case 'O':
+	 		measurements->orientation = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		break;
+	 	 default:
+	 		 break;
+	 }
+ }
 
-	 MbBuffer[id] = *frame;
+int16_t charsToInt16(uint32_t length, uint8_t * chars) {
+	int16_t valor = 0;
+	uint8_t contador = 0;
+	int16_t signo = 1;
+	char dato = chars[contador];
+	switch(dato){
+		case '+':
+			signo = 1;
+			contador++;
+			break;
+		case '-':
+			signo = -1;
+			contador++;
+			break;
+		default:
+			break;
+	}
+	for(; contador < length; contador++){
+		valor = 10*valor + chars[contador] - '0';
+	}
+	return (valor*signo);
+ }
 
+ void callback(canFrame_t *frame, CAN_STATUS s){
+	 if(s != READ_FAIL){
+		 if(IS_ID_OK(frame->ID)){
+			 MbBuffer[(frame->ID)-(0x100)] = *frame;
+		 }
+	 }
  }
 
 

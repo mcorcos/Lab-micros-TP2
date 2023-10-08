@@ -6,18 +6,21 @@
 C_SRCS += \
 ../SDK/startup/hardware.c \
 ../SDK/startup/main.c \
+../SDK/startup/mainTestBench.c \
 ../SDK/startup/semihost_hardfault.c \
 ../SDK/startup/startup_mk64f12.c 
 
 OBJS += \
 ./SDK/startup/hardware.o \
 ./SDK/startup/main.o \
+./SDK/startup/mainTestBench.o \
 ./SDK/startup/semihost_hardfault.o \
 ./SDK/startup/startup_mk64f12.o 
 
 C_DEPS += \
 ./SDK/startup/hardware.d \
 ./SDK/startup/main.d \
+./SDK/startup/mainTestBench.d \
 ./SDK/startup/semihost_hardfault.d \
 ./SDK/startup/startup_mk64f12.d 
 

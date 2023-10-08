@@ -29,7 +29,7 @@
 #define MAX_BYTES 8
 
 #define MY_ID (0x104) //104
-#define MY_MB_INDEX 0
+#define MY_MB_INDEX 4
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -67,7 +67,6 @@
 	 CAN_TRANSMIT_OK,
 	 CAN_RECEIVE_FAIL,
 	 CAN_RECEIVE_OK
-
  }CAN_STATUS;
  
  typedef struct{
@@ -116,7 +115,7 @@ typedef struct{
 
 
 
- typedef void (*ptrToFunction)(canFrame_t* frame);
+ typedef void (*ptrToFunction)(canFrame_t* frame, CAN_STATUS s);
 
 
 /*******************************************************************************

@@ -5,7 +5,7 @@
 
 #define UART_TEST_ID 0 // El ID de UART que deseas probar (ajústalo según tu configuración)
 
-int main() {
+int mainX() {
     // Inicializa el UART con la configuración predeterminada o la que desees probar
     uart_cfg_t config = {
         .baudrate = UART_HAL_DEFAULT_BAUDRATE, // Puedes ajustar la velocidad aquí

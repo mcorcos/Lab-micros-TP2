@@ -74,14 +74,11 @@ void configureCANClock(canConfig_t * config);
 			//CAN0->RXIMR[i] = 0xFFFFFFFF; // Masks RESET
 		}
 
-
 		//Exit Freeze
 
 		CAN0->MCR &= ~CAN_MCR_HALT_MASK;
 		//esperar a que se freezee..
 		while((CAN0->MCR & CAN_MCR_FRZACK_MASK)==CAN_MCR_FRZACK_MASK);
-
-
 
 		return CAN_READY;
 }
@@ -229,14 +226,7 @@ STATUS_READ readCAN(uint8_t MB_ID, canFrame_t *frame){
 }
 
 
-
-
-
-
 void CAN0_ORed_Message_buffer_IRQHandler(void){
-
-
-
 
 	for(int i=0; i<CAN_ID_COUNT; i++)
 	{
@@ -248,7 +238,7 @@ void CAN0_ORed_Message_buffer_IRQHandler(void){
 				frameRx.dataWord1 = 0x00000000;
 
 				CAN_STATUS s = readCAN(i,&frameRx);
-				callbacks[i](&frameRx);
+				callbacks[i](&frameRx, s);
 
 			}
 		}

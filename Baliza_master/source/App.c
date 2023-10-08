@@ -111,7 +111,6 @@ void preparePackage(Measurement measurament);
 void sendCompletePackageCan(void);
 void sendUpdatedPackageCan_R_(void);
 void sendUpdatedPackageCan_C_(void);
-int16_t charsToInt16(char chars[3], char signo)
 //void sendUpdatedPackageCan_O_(void);
 
 /*******************************************************************************
@@ -274,16 +273,9 @@ void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 
 void receiveBoardsPos(void){
-
-
 	receiveCAN(&measurament);
 	uint8_t id  = measurament.boardID;
 
-	id = id - 256;
-
-
-
-	//Estaria bueno que se haga dentro de una funcion que se llama parsePackage() y ahi usar la funcion charsToInt16
 	bufferDisp[id].rolling = measurament.rolling;
 	bufferDisp[id].tilt = measurament.tilt;
 	bufferDisp[id].orientation = measurament.orientation;
@@ -298,8 +290,8 @@ void sendPos2Boards(void){ //antes aca se enviaba Can, queda cambiarle el nombre
 	preparePackage(measurament);
 
 	//Updateo los datos de mi placa (bufferDisp[0])
-	bufferDisp[0].rolling = measurament.rolling ;
-	bufferDisp[0].tilt = measurament.tilt ;
+	bufferDisp[4].rolling = measurament.rolling ;
+	bufferDisp[4].tilt = measurament.tilt ;
 	//bufferDisp[0].orientation = measurament.orientation ;
 }
 
@@ -344,8 +336,6 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
     	}
     }
 
-
-
     if (m.rolling > 180) {
         m.rolling -= 360;
     } else if (m.rolling < -179) {
@@ -378,7 +368,6 @@ void byteToChars(unsigned char byte, uint8_t *result) {
 
 void preparePackage(Measurement measurament){
 
-
 	canPackageTx[0].dataType[0] = 'R';
 
 	if(measurament.rolling>=0){
@@ -392,8 +381,6 @@ void preparePackage(Measurement measurament){
 
 	}
 
-
-
 	canPackageTx[1].dataType[0] = 'C';
 
 	if(measurament.tilt>=0){
@@ -405,14 +392,10 @@ void preparePackage(Measurement measurament){
 		byteToChars((-1)*measurament.tilt , canPackageTx[1].value);
 	}
 
-
-
 }
 
 
 void sendCompletePackageCan(void){
-
-
 
 	tempPackage.dataType[0] = canPackageTx[0].dataType[0]; //Mando el primero
 	tempPackage.sign = canPackageTx[0].sign;
@@ -430,23 +413,15 @@ void sendCompletePackageCan(void){
 
 	sendCan(&tempPackage);
 
-
-
-
-
-
 }
 
 void sendUpdatedPackageCan_R_(void){
 
-
 	currentPackage = bufferDisp[0].rolling ;
-
 
 	if(previousPackage != currentPackage){
 
 		previousPackage = bufferDisp[0].rolling ;
-
 
 		tempPackage.dataType[0] = canPackageTx[0].dataType[0]; //Mando el primero
 		tempPackage.sign = canPackageTx[0].sign;
@@ -454,25 +429,18 @@ void sendUpdatedPackageCan_R_(void){
 		tempPackage.value[1] = canPackageTx[0].value[1];
 		tempPackage.value[2] = canPackageTx[0].value[2];
 		sendCan(&tempPackage);
-
 	}
-
 
 }
 
 
 void sendUpdatedPackageCan_C_(void){
 
-
-
-
 	currentPackage = bufferDisp[0].tilt;;
-
 
 	if(previousPackage != currentPackage){
 
 		previousPackage = bufferDisp[0].tilt; ;
-
 
 		tempPackage.dataType[0] = canPackageTx[1].dataType[0]; //Mando el segundo
 		tempPackage.sign = canPackageTx[1].sign;
@@ -481,7 +449,6 @@ void sendUpdatedPackageCan_C_(void){
 		tempPackage.value[2] = canPackageTx[1].value[2];
 
 		sendCan(&tempPackage);
-
 	}
 
 }
@@ -496,16 +463,6 @@ void sendUpdatedPackageCan_O_(void){
 }*/
 
 
-int16_t charsToInt16(char chars[3], char signo) {
-    // Convierte los caracteres a un número entero
-    int16_t valor = ((chars[0] - '0') * 100) + ((chars[1] - '0') * 10) + (chars[2] - '0');
 
-    // Aplica el signo
-    if (signo == '-') {
-        valor = -valor;
-    }
-
-    return valor;
-}
 
 
