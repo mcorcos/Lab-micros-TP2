@@ -187,65 +187,65 @@ void App_Run (void)
 
 
 void updateDispositives(void){  //Actualizo la informacion de los buffers hacia el
-	for(uint8_t i=0; i < CANT_DISP ; i++){
-		dispositives[i].rolling = bufferDisp[i].rolling;
-		dispositives[i].tilt = bufferDisp[i].tilt;
-		dispositives[i].orientation = bufferDisp[i].orientation;
-		updateMessage4CPU(i);
+	for(uint8_t j=0; j < CANT_DISP ; j++){
+		dispositives[j].rolling = bufferDisp[j].rolling;
+		dispositives[j].tilt = bufferDisp[j].tilt;
+		dispositives[j].orientation = bufferDisp[j].orientation;
+		updateMessage4CPU(j);
 	}
 }
 
-void updateMessage4CPU(uint8_t i){
-	message4CPU[i][0].dataType[0] = 'I';//poner el ID
-	byteToChars( i ,message4CPU[i][0].value);
+void updateMessage4CPU(uint8_t n){
+	message4CPU[n][0].dataType[0] = 'I';//poner el ID
+	byteToChars( n ,message4CPU[n][0].value);
 
-	if(dispositives[i].rolling >= 0){
-		message4CPU[i][1].dataType[0] = '+';//poner el + o -
-		byteToChars( dispositives[i].rolling,message4CPU[i][1].value );
+	if(dispositives[n].rolling >= 0){
+		message4CPU[n][1].dataType[0] = '+';//poner el + o -
+		byteToChars( dispositives[n].rolling,message4CPU[n][1].value );
 	}
 	else{
-		message4CPU[i][1].dataType[0] = '-';//poner el + o -
-		byteToChars((-1) * dispositives[i].rolling,message4CPU[i][1].value );
+		message4CPU[n][1].dataType[0] = '-';//poner el + o -
+		byteToChars((-1) * dispositives[n].rolling,message4CPU[n][1].value );
 	}
 
-	if(dispositives[i].tilt >= 0){
-		message4CPU[i][2].dataType[0] = '+';//poner el + o -
-		byteToChars( dispositives[i].tilt,message4CPU[i][2].value );
+	if(dispositives[n].tilt >= 0){
+		message4CPU[n][2].dataType[0] = '+';//poner el + o -
+		byteToChars( dispositives[n].tilt,message4CPU[n][2].value );
 
 	}
 	else{
-		message4CPU[i][2].dataType[0] = '-';//poner el + o -
-		byteToChars( (-1) *dispositives[i].tilt,message4CPU[i][2].value );
+		message4CPU[n][2].dataType[0] = '-';//poner el + o -
+		byteToChars( (-1) *dispositives[n].tilt,message4CPU[n][2].value );
 
 	}
 
-	if(dispositives[i].orientation >= 0){
-		message4CPU[i][3].dataType[0] = '+';//poner el + o -
-		byteToChars( dispositives[i].orientation ,message4CPU[i][3].value);
+	if(dispositives[n].orientation >= 0){
+		message4CPU[n][3].dataType[0] = '+';//poner el + o -
+		byteToChars( dispositives[n].orientation ,message4CPU[n][3].value);
 	}
 	else{
-		message4CPU[i][3].dataType[0] = '-';//poner el + o -
-		byteToChars( (-1) * dispositives[i].orientation ,message4CPU[i][3].value);
+		message4CPU[n][3].dataType[0] = '-';//poner el + o -
+		byteToChars( (-1) * dispositives[n].orientation ,message4CPU[n][3].value);
 	}
 
-	message4CPU[i][4].dataType[0] = 'T'; // T de terminador
-	message4CPU[i][4].value[0] = '\n';// Pongo el terminador para que la aplicacion sepa que termino el msg !
-	message4CPU[i][4].value[1] = '\n';
-	message4CPU[i][4].value[2] = '\n';
+	message4CPU[n][4].dataType[0] = 'T'; // T de terminador
+	message4CPU[n][4].value[0] = '\n';// Pongo el terminador para que la aplicacion sepa que termino el msg !
+	message4CPU[n][4].value[1] = '\n';
+	message4CPU[n][4].value[2] = '\n';
 }
 
 void initDispositives(void){ // inicio los ids  de los dispositives
-	for(uint8_t i=0;i<CANT_DISP;i++){
-		dispositives[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
+	for(uint8_t i_=0;i_<CANT_DISP;i_++){
+		dispositives[i_].id = i_ + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
 	}
 }
 
 void initBuffer(void){
-	for(uint8_t i=0;i<CANT_DISP;i++){
-		bufferDisp[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
-		bufferDisp[i].rolling = 0; //Dummy letter para chequear que funciona
-		bufferDisp[i].tilt = 0;
-		bufferDisp[i].orientation = 0;
+	for(uint8_t ii=0;ii<CANT_DISP;ii++){
+		bufferDisp[ii].id = ii + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
+		bufferDisp[ii].rolling = 0; //Dummy letter para chequear que funciona
+		bufferDisp[ii].tilt = 0;
+		bufferDisp[ii].orientation = 0;
 	}
 }
 
@@ -265,24 +265,40 @@ void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 
 void receiveBoardsPos(void){
-	uint8_t change;
-	for(int i = 0; i<CANT_DISP; i++){
+	uint8_t change = CHANGE_NONE;
+	uint8_t i = 0;
+	for(; i<CANT_DISP; i++){
 		if(i!=4){
 			change = receiveCAN(&measurament, i);
 			switch(change){
 						case CHANGE_R:{
 							bufferDisp[i].rolling = measurament.rolling;
+							bufferDisp[i].tilt = dispositives[i].tilt;
+							bufferDisp[i].orientation = dispositives[i].orientation;
 							break;
 						}
 						case CHANGE_C:{
 							bufferDisp[i].tilt = measurament.tilt;
+							bufferDisp[i].rolling = dispositives[i].rolling;
+							bufferDisp[i].orientation = dispositives[i].orientation;
 							break;
 						}
 						case CHANGE_O:{
 							bufferDisp[i].orientation = measurament.orientation;
+							bufferDisp[i].rolling = dispositives[i].rolling;
+							bufferDisp[i].tilt = dispositives[i].tilt;
+							break;
+						}
+						default:{
+							bufferDisp[i].orientation = dispositives[i].orientation;
+							bufferDisp[i].rolling = dispositives[i].rolling;
+							bufferDisp[i].tilt = dispositives[i].tilt;
 							break;
 						}
 					}
+			measurament.rolling = 0;
+			measurament.tilt = 0;
+			measurament.orientation = 0;
 		}
 	}
 }

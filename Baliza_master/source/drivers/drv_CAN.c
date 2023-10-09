@@ -15,7 +15,7 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 #define BASE_ID 256
-#define IS_ID_OK(id) (((id)<0x107)&&((id)>=0x100)&&((id)!=0x104))
+#define IS_ID_OK(id) (((id)<7)&&((id)>=0)&&((id)!=4))
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -101,37 +101,38 @@ CAN_STATUS initBoardsCan(void){
 
 
  uint8_t receiveCAN(Measurement *measurements, uint8_t idx_mb_buffer){
-	 uint8_t change;
-	 if(IS_ID_OK(MbBuffer[idx_mb_buffer].ID)){
+	 uint8_t change_r;
+	 if(IS_ID_OK((MbBuffer[idx_mb_buffer].ID - 0x100))){
 		 //Para obtener el ID en formato de uint16_t y con valores de una unidad se le resta 256 para normalizarlo
-		 measurements->boardID = MbBuffer[idx_mb_buffer].ID - (0x100);
-		 change = parsePackage(measurements, idx_mb_buffer);
+		 measurements->boardID = MbBuffer[idx_mb_buffer].ID - 0x100;
+		 change_r = parsePackage(measurements, idx_mb_buffer);
 	 }
-	 return change;
+	 return change_r;
  }
 
 
 
  uint8_t parsePackage(Measurement *measurements, uint8_t idx_mb_buffer){
 	 uint8_t angleID = MbBuffer[idx_mb_buffer].dataByte0;
-	 uint8_t change;
+	 uint8_t change_p = CHANGE_NONE;
 	 switch(angleID){
 	 	 case 'R':
 	 		measurements->rolling = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
-	 		change = CHANGE_R;
+	 		change_p = CHANGE_R;
 	 		break;
 	 	 case 'C':
 	 		measurements->tilt = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
-	 		change = CHANGE_C;
+	 		change_p = CHANGE_C;
 	 		break;
 	 	 case 'O':
 	 		measurements->orientation = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
-	 		change = CHANGE_O;
+	 		change_p = CHANGE_O;
 	 		break;
 	 	 default:
+	 		change_p = CHANGE_NONE;
 	 		 break;
 	 }
-	 return change;
+	 return change_p;
  }
 
 int16_t charsToInt16(uint32_t length, uint8_t * chars) {
@@ -159,7 +160,7 @@ int16_t charsToInt16(uint32_t length, uint8_t * chars) {
 
  void callback(canFrame_t *frame, CAN_STATUS s){
 	 if(s != READ_FAIL){
-		 if(IS_ID_OK(frame->ID)){
+		 if(IS_ID_OK((frame->ID)-0x100)){
 			 MbBuffer[(frame->ID)-(0x100)] = *frame;
 		 }
 	 }

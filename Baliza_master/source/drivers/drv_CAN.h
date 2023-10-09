@@ -39,7 +39,7 @@ typedef struct{
  					//  valor , valor 2 , cal
  }packageCan_t;
 
- enum{CHANGE_R, CHANGE_C, CHANGE_O};
+ enum{CHANGE_R, CHANGE_C, CHANGE_O, CHANGE_NONE};
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
