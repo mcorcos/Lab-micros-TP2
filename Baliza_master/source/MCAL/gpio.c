@@ -62,6 +62,9 @@ void gpioMode (pin_t pin, uint8_t mode){
 			break;
 		case INPUT_PULLDOWN:
 			break;
+
+		case OUTPUT_PULLUP:
+			break;
 	}
 
 

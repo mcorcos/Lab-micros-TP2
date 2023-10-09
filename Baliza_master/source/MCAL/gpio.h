@@ -41,6 +41,7 @@
 #define OUTPUT              1
 #define INPUT_PULLUP        2
 #define INPUT_PULLDOWN      3
+#define OUTPUT_PULLUP		4
 #endif // INPUT
 
 
@@ -58,9 +59,6 @@
  ******************************************************************************/
 // Ports
 enum { PA, PB, PC, PD, PE };
-
-
-
 
 
 typedef enum

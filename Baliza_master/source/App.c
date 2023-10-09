@@ -40,6 +40,8 @@
 #define CANT_DISP 7
 #define CANT_PACKAGE 4
 #define SIZE_OF_PACKAGE 2
+
+#define IS_DIFFERENT(current, last) ((((current)-(last))>=5)||(((last)-(current))>=5))
 /*******************************************************************************
  *******************************************************************************
                         STRUCTS & TYPEDFS
@@ -52,6 +54,7 @@ typedef struct{
 	int16_t tilt;
 	int16_t orientation;
 }dispositive_t;
+
 
 
 /*******************************************************************************
@@ -123,7 +126,6 @@ void sendUpdatedPackageCan_C_(void);
 /* Función que se llama 1 vez, al comienzo del programa */
 void App_Init (void)
 {
-
 	init_K64Leds(); //init drv de los leds de la kinetis
 	timerInit(); // init de timer
 	init_DEVBOARD(); // init de la placa shield creada por el grupo
@@ -143,8 +145,6 @@ void App_Init (void)
 		}
 
 	}
-
-
 
 	//inicio los timers de UART
 	timerTx = timerGetId();
@@ -168,19 +168,14 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-
 	// updateo las posiciones de mi placa y de las demas
-	//updateDispositives();
+	updateDispositives();
+
 	sendPos2Boards();
 
-
 	ReadAccelMagnData();
+
 	receiveBoardsPos();
-
-
-
-
-
 }
 
 
@@ -248,17 +243,14 @@ void initDispositives(void){ // inicio los ids  de los dispositives
 void initBuffer(void){
 	for(uint8_t i=0;i<CANT_DISP;i++){
 		bufferDisp[i].id = i + '0'; // Quiero poner el numero i en char, por eso le sumo el comienzo de los numeros que es'0'
-		bufferDisp[i].rolling = 'A'; //Dummy letter para chequear que funciona
-		bufferDisp[i].tilt = 'B';
-		bufferDisp[i].orientation = 'C';
+		bufferDisp[i].rolling = 0; //Dummy letter para chequear que funciona
+		bufferDisp[i].tilt = 0;
+		bufferDisp[i].orientation = 0;
 	}
 }
 
 
 void callbackTimerTx(void){ //callback para transmision de datos por UART
-
-
-
 
 	if(messagePointer == &message4CPU[CANT_DISP-1][CANT_PACKAGE+1]){ // SI SE TERMINA EL ARREGLO QUE VUELVA AL PRINCIPIO
 		messagePointer = &message4CPU[0][0];						// es 5 el limite para que se pueda imprimir la direccion 4
@@ -273,13 +265,26 @@ void callbackTimerRx(void){ //Callback para recepecion de datos de UART
 
 
 void receiveBoardsPos(void){
-	receiveCAN(&measurament);
-	uint8_t id  = measurament.boardID;
-
-	bufferDisp[id].rolling = measurament.rolling;
-	bufferDisp[id].tilt = measurament.tilt;
-	bufferDisp[id].orientation = measurament.orientation;
-
+	uint8_t change;
+	for(int i = 0; i<CANT_DISP; i++){
+		if(i!=4){
+			change = receiveCAN(&measurament, i);
+			switch(change){
+						case CHANGE_R:{
+							bufferDisp[i].rolling = measurament.rolling;
+							break;
+						}
+						case CHANGE_C:{
+							bufferDisp[i].tilt = measurament.tilt;
+							break;
+						}
+						case CHANGE_O:{
+							bufferDisp[i].orientation = measurament.orientation;
+							break;
+						}
+					}
+		}
+	}
 }
 void sendPos2Boards(void){ //antes aca se enviaba Can, queda cambiarle el nombre a la funcion como "update my boards position"
 
@@ -310,8 +315,6 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
 
     // Calcular el ángulo de inclinación (tilt) en grados
     m.rolling = (int)(atan2(accel.x, sqrt(accel.y * accel.y + accel.z * accel.z)) * (180.0 / M_PI));
-
-
 
 
     // Calcular el ángulo de balanceo (roll) en grados
@@ -416,12 +419,13 @@ void sendCompletePackageCan(void){
 }
 
 void sendUpdatedPackageCan_R_(void){
+	static uint8_t counter_R = 0;
 
-	currentPackage = bufferDisp[0].rolling ;
+	currentPackage = bufferDisp[4].rolling ;
 
-	if(previousPackage != currentPackage){
+	if((IS_DIFFERENT(currentPackage, previousPackage)) || (counter_R == 40)){
 
-		previousPackage = bufferDisp[0].rolling ;
+		previousPackage = bufferDisp[4].rolling ;
 
 		tempPackage.dataType[0] = canPackageTx[0].dataType[0]; //Mando el primero
 		tempPackage.sign = canPackageTx[0].sign;
@@ -430,17 +434,24 @@ void sendUpdatedPackageCan_R_(void){
 		tempPackage.value[2] = canPackageTx[0].value[2];
 		sendCan(&tempPackage);
 	}
+	if(counter_R == 40){
+		counter_R = 0;
+	}
+	else{
+		++counter_R;
+	}
 
 }
 
 
 void sendUpdatedPackageCan_C_(void){
+	static uint8_t counter_C = 0;
 
-	currentPackage = bufferDisp[0].tilt;;
+	currentPackage = bufferDisp[4].tilt;;
 
-	if(previousPackage != currentPackage){
+	if((IS_DIFFERENT(currentPackage, previousPackage)) || (counter_C == 40)){
 
-		previousPackage = bufferDisp[0].tilt; ;
+		previousPackage = bufferDisp[4].tilt; ;
 
 		tempPackage.dataType[0] = canPackageTx[1].dataType[0]; //Mando el segundo
 		tempPackage.sign = canPackageTx[1].sign;
@@ -449,6 +460,12 @@ void sendUpdatedPackageCan_C_(void){
 		tempPackage.value[2] = canPackageTx[1].value[2];
 
 		sendCan(&tempPackage);
+	}
+	if(counter_C == 40){
+			counter_C = 0;
+	}
+	else{
+		++counter_C;
 	}
 
 }

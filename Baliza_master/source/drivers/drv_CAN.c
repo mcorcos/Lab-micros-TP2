@@ -15,11 +15,12 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 #define BASE_ID 256
-#define IS_ID_OK(id) (((id)>0x107)&&((id)>=0x100)&&((id)!=0x104))
+#define IS_ID_OK(id) (((id)<0x107)&&((id)>=0x100)&&((id)!=0x104))
 
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -31,7 +32,7 @@ static 	canFrame_t frameTx;
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH LOCAL SCOPE
  ******************************************************************************/
-void parsePackage(Measurement *measurements, uint8_t idx_mb_buffer);
+uint8_t parsePackage(Measurement *measurements, uint8_t idx_mb_buffer);
 int16_t charsToInt16(uint32_t length, uint8_t *chars);
 
 /*******************************************************************************
@@ -99,35 +100,38 @@ CAN_STATUS initBoardsCan(void){
  }
 
 
- uint8_t receiveCAN(Measurement *measurements){
-	 uint8_t idx_mb_buffer = 0;
-	 for(;idx_mb_buffer <= CAN_ID_COUNT; idx_mb_buffer++){
-		 if(IS_ID_OK(MbBuffer[idx_mb_buffer].ID)){
-		 		 //Para obtener el ID en formato de uint16_t y con valores de una unidad se le resta 256 para normalizarlo
-		 		 measurements->boardID = MbBuffer[idx_mb_buffer].ID - (0x100);
-		 		 parsePackage(measurements, idx_mb_buffer);
-		 }
+ uint8_t receiveCAN(Measurement *measurements, uint8_t idx_mb_buffer){
+	 uint8_t change;
+	 if(IS_ID_OK(MbBuffer[idx_mb_buffer].ID)){
+		 //Para obtener el ID en formato de uint16_t y con valores de una unidad se le resta 256 para normalizarlo
+		 measurements->boardID = MbBuffer[idx_mb_buffer].ID - (0x100);
+		 change = parsePackage(measurements, idx_mb_buffer);
 	 }
-	 return CAN_RECEIVE_OK;
+	 return change;
  }
 
 
 
- void parsePackage(Measurement *measurements, uint8_t idx_mb_buffer){
+ uint8_t parsePackage(Measurement *measurements, uint8_t idx_mb_buffer){
 	 uint8_t angleID = MbBuffer[idx_mb_buffer].dataByte0;
+	 uint8_t change;
 	 switch(angleID){
 	 	 case 'R':
 	 		measurements->rolling = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		change = CHANGE_R;
 	 		break;
 	 	 case 'C':
 	 		measurements->tilt = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		change = CHANGE_C;
 	 		break;
 	 	 case 'O':
 	 		measurements->orientation = charsToInt16(MbBuffer[idx_mb_buffer].length, &(MbBuffer[idx_mb_buffer].dataByte1));
+	 		change = CHANGE_O;
 	 		break;
 	 	 default:
 	 		 break;
 	 }
+	 return change;
  }
 
 int16_t charsToInt16(uint32_t length, uint8_t * chars) {
@@ -147,7 +151,7 @@ int16_t charsToInt16(uint32_t length, uint8_t * chars) {
 		default:
 			break;
 	}
-	for(; contador < length; contador++){
+	for(; contador < length-1; contador++){
 		valor = 10*valor + chars[contador] - '0';
 	}
 	return (valor*signo);

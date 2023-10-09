@@ -142,7 +142,7 @@ void  configRxMB( uint8_t mb_id, uint32_t ID){
 	CAN0->MB[mb_id].CS = CAN_CS_CODE(EMPTY_RX);
 }
 
-uint8_t transmitCan(uint8_t MB_ID,canFrame_t *frame){
+uint8_t transmitCan(uint8_t MB_ID,canFrame_t *frameTx){
 
 
 	/// check if IFLAG its asserted and write 1 to clear it
@@ -151,24 +151,24 @@ uint8_t transmitCan(uint8_t MB_ID,canFrame_t *frame){
 
 
 	//write ID
-	CAN0->MB[MB_ID].ID = CAN_ID_STD(frame->ID);
+	CAN0->MB[MB_ID].ID = CAN_ID_STD(frameTx->ID);
 
 	/// Write INACTIVE
 	CAN0->MB[MB_ID].CS = CAN_CS_CODE(INACTIVE_TX);
 
 	// Write data bytes
-	CAN0->MB[MB_ID].WORD0 = CAN_WORD0_DATA_BYTE_0(frame->dataByte0) |
-	                    	CAN_WORD0_DATA_BYTE_1(frame->dataByte1) |
-	                    	CAN_WORD0_DATA_BYTE_2(frame->dataByte2) |
-	                    	CAN_WORD0_DATA_BYTE_3(frame->dataByte3);
-	CAN0->MB[MB_ID].WORD1 = CAN_WORD1_DATA_BYTE_4(frame->dataByte4) |
-	                        CAN_WORD1_DATA_BYTE_5(frame->dataByte5) |
-	                    	CAN_WORD1_DATA_BYTE_6(frame->dataByte6) |
-	                    	CAN_WORD1_DATA_BYTE_7(frame->dataByte7);
+	CAN0->MB[MB_ID].WORD0 = CAN_WORD0_DATA_BYTE_0(frameTx->dataByte0) |
+	                    	CAN_WORD0_DATA_BYTE_1(frameTx->dataByte1) |
+	                    	CAN_WORD0_DATA_BYTE_2(frameTx->dataByte2) |
+	                    	CAN_WORD0_DATA_BYTE_3(frameTx->dataByte3);
+	CAN0->MB[MB_ID].WORD1 = CAN_WORD1_DATA_BYTE_4(frameTx->dataByte4) |
+	                        CAN_WORD1_DATA_BYTE_5(frameTx->dataByte5) |
+	                    	CAN_WORD1_DATA_BYTE_6(frameTx->dataByte6) |
+	                    	CAN_WORD1_DATA_BYTE_7(frameTx->dataByte7);
 
 	//write code and length
 
-	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX) |  CAN_CS_DLC(frame->length);
+	CAN0->MB[MB_ID].CS = CAN_CS_CODE(ACTIVE_TX) |  CAN_CS_DLC(frameTx->length);
 
 	return TRANSMIT_OK;
 }

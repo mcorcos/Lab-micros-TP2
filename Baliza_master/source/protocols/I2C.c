@@ -35,6 +35,8 @@
 
 #define I2C_CLEAR_IRQ_FLAG       (I2C0->S |= I2C_S_IICIF_MASK)
 
+//#define I2C_RELEASE_BUS_DELAY 100
+
  /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -56,6 +58,7 @@ static I2C_CONFIG isrI2cConfig;
 
 static bool i2cEndCommunication( I2C_FAULT fault_);
 void i2cCommunication(void);
+//static void i2c_release_bus_delay();
 
 /*******************************************************************************
  * FUNCTION DEFINITIONS WITH GLOBAL SCOPE
@@ -67,13 +70,11 @@ void i2cCommunication(void);
 
 void initI2C(void){
 
-
-
 	//Enable porte clock gating bc i2c appears on PORTE
 	SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 	SIM->SCGC4 |=  SIM_SCGC4_I2C0_MASK;
 
-
+	//I2C_ReleaseBus(PIN_SCL, PIN_SDA);
 
 	//Configure clock
 	I2C0->F = 0x97;
@@ -82,8 +83,6 @@ void initI2C(void){
 
 	I2C0->C1 |= I2C_C1_IICIE_MASK; // Enables I2C interrupt requests.
 	I2C0->C1 |= I2C_C1_IICEN_MASK; // Enables I2C module operation.
-
-
 
 
 	NVIC_EnableIRQ(I2C0_IRQn);
@@ -98,8 +97,6 @@ void initI2C(void){
 	(PORTE->PCR)[PIN_SCL] &= ~PORT_PCR_MUX_MASK;
 	(PORTE->PCR)[PIN_SCL] |= PORT_PCR_MUX(PORT_mAlt5);
 
-
-
 	(PORTE->PCR)[PIN_SDA] |= PORT_PCR_ODE_MASK;//Set open drain
 	(PORTE->PCR)[PIN_SCL] |= PORT_PCR_ODE_MASK;
 
@@ -109,10 +106,53 @@ void initI2C(void){
 	(PORTE->PCR)[PIN_SDA] |= (HIGH << PORT_PCR_PS_SHIFT);//Pull Up
 	(PORTE->PCR)[PIN_SCL] |= (HIGH << PORT_PCR_PS_SHIFT);
 
-
 }
 
-
+//static void i2c_release_bus_delay(void){
+//	for (uint32_t i = 0; i < I2C_RELEASE_BUS_DELAY; i++){
+//		mili = 1;
+//	}
+//}
+//
+//void I2C_ReleaseBus(uint32_t pin_scl, uint32_t pin_sda)
+//{
+//	gpioMode(pin_scl, OUTPUT_PULLUP);
+//	gpioMode(pin_sda, OUTPUT_PULLUP);
+//
+//	gpioWrite(pin_scl, HIGH);
+//	gpioWrite(pin_sda, HIGH);
+//
+//	/* Drive SDA low first to simulate a start */
+//    gpioWrite(pin_sda, LOW);
+//    i2c_release_bus_delay();
+//
+//    /* Send 9 pulses on SCL and keep SDA high */
+//    for (int i = 0; i < 9; i++)
+//    {
+//    	gpioWrite(pin_scl, LOW);
+//        i2c_release_bus_delay();
+//
+//    	gpioWrite(pin_sda, HIGH);
+//        i2c_release_bus_delay();
+//
+//    	gpioWrite(pin_scl, HIGH);
+//        i2c_release_bus_delay();
+//        i2c_release_bus_delay();
+//    }
+//
+//    /* Send stop */
+//    gpioWrite(pin_scl, LOW);
+//    i2c_release_bus_delay();
+//
+//    gpioWrite(pin_sda, LOW);
+//    i2c_release_bus_delay();
+//
+//    gpioWrite(pin_scl, HIGH);
+//    i2c_release_bus_delay();
+//
+//    gpioWrite(pin_sda, LOW);
+//    i2c_release_bus_delay();
+//}
 
 void i2cDefaultConfig( uint8_t address) {
 	isrI2cConfig.address_r = (address<<1) | 0x01;   // OR con 0b00000001

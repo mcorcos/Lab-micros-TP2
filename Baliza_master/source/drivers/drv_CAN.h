@@ -37,8 +37,9 @@ typedef struct{
  	char sign;
  	uint8_t value[3]; // el valor  ... 255 -> '2' '5' '5'
  					//  valor , valor 2 , cal
-
  }packageCan_t;
+
+ enum{CHANGE_R, CHANGE_C, CHANGE_O};
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -48,7 +49,7 @@ typedef struct{
  ******************************************************************************/
 
 CAN_STATUS initBoardsCan(void);
-uint8_t receiveCAN(Measurement *measurements);
+uint8_t receiveCAN(Measurement *measurements, uint8_t idx_mb_buffer);
 uint8_t sendCan( packageCan_t * package);
  
 #endif /*  DRIVERS_DRV_CAN_H_ */

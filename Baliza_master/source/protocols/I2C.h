@@ -113,6 +113,8 @@ void i2cLoadCallback(ptrToFun callback_);
 I2C_FAULT getFault(void);
 
 void restart(void);
+
+//void I2C_ReleaseBus(uint32_t pin_scl, uint32_t pin_sda);
  
 #endif // _I2C_H_
  
