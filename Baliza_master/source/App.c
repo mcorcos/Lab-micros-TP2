@@ -71,7 +71,7 @@ static tim_id_t timerRx;
 static tim_id_t timerCanEvery1500mSecTx;
 static tim_id_t timerCanUpdateMovement_R_Tx;
 static tim_id_t timerCanUpdateMovement_C_Tx;
-//static tim_id_t timerCanUpdateMovement_O_Tx;
+static tim_id_t timerCanUpdateMovement_O_Tx;
 
 
 //Dispositives es el arreglo de informacion donde se guarda la info de las placas, y el mismo se manda a la cpu por medio de msg4CPU
@@ -114,7 +114,7 @@ void preparePackage(Measurement measurament);
 void sendCompletePackageCan(void);
 void sendUpdatedPackageCan_R_(void);
 void sendUpdatedPackageCan_C_(void);
-//void sendUpdatedPackageCan_O_(void);
+void sendUpdatedPackageCan_O_(void);
 
 /*******************************************************************************
  *******************************************************************************
@@ -157,7 +157,7 @@ void App_Init (void)
     timerStart(timerCanEvery1500mSecTx, TIMER_MS2TICKS(TIMER_EVERY1500_MS), TIM_MODE_PERIODIC, sendCompletePackageCan); //info para los timers
     timerStart(timerCanUpdateMovement_R_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_R_); //info para los timers
     timerStart(timerCanUpdateMovement_C_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_C_); //info para los timers
-   // timerStart(timerCanUpdateMovement_O_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_O_); //info para los timers
+   	timerStart(timerCanUpdateMovement_O_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_O_); //info para los timers
 
    // timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
 
@@ -313,7 +313,7 @@ void sendPos2Boards(void){ //antes aca se enviaba Can, queda cambiarle el nombre
 	//Updateo los datos de mi placa (bufferDisp[0])
 	bufferDisp[4].rolling = measurament.rolling ;
 	bufferDisp[4].tilt = measurament.tilt ;
-	//bufferDisp[0].orientation = measurament.orientation ;
+	bufferDisp[4].orientation = measurament.orientation ;
 }
 
 
@@ -332,6 +332,7 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
     // Calcular el ángulo de inclinación (tilt) en grados
     m.rolling = (int)(atan2(accel.x, sqrt(accel.y * accel.y + accel.z * accel.z)) * (180.0 / M_PI));
 
+	m.orientation = (int)(atan2(accel.x, accel.y) * (180.0 / M_PI));
 
     // Calcular el ángulo de balanceo (roll) en grados
     m.tilt = (int)(atan2(accel.y, accel.z) * (180.0 / M_PI));
@@ -359,6 +360,12 @@ Measurement normalize(rawdata_t accel,rawdata_t magnet){
         m.rolling -= 360;
     } else if (m.rolling < -179) {
         m.rolling += 360;
+    }
+
+	if (m.orientation > 180) {
+        m.orientation -= 360;
+    } else if (m.orientation < -179) {
+        m.orientation += 360;
     }
 
     return m;
@@ -411,6 +418,16 @@ void preparePackage(Measurement measurament){
 		byteToChars((-1)*measurament.tilt , canPackageTx[1].value);
 	}
 
+	canPackageTx[2].dataType[0] = 'O';
+
+	if(measurament.orientation>=0){
+		canPackageTx[2].sign  = '+';
+		byteToChars(measurament.orientation , canPackageTx[2].value);
+	}
+	else{
+		canPackageTx[2].sign  = '-' ;
+		byteToChars((-1)*measurament.orientation , canPackageTx[2].value);
+	}
 }
 
 
@@ -486,14 +503,32 @@ void sendUpdatedPackageCan_C_(void){
 
 }
 
-/*
 void sendUpdatedPackageCan_O_(void){
+	static uint8_t counter_O = 0;
+
+	currentPackage = bufferDisp[4].orientation;;
+
+	if((IS_DIFFERENT(currentPackage, previousPackage)) || (counter_O == 40)){
+
+		previousPackage = bufferDisp[4].orientation; ;
+
+		tempPackage.dataType[0] = canPackageTx[2].dataType[0]; //Mando el segundo
+		tempPackage.sign = canPackageTx[2].sign;
+		tempPackage.value[0] = canPackageTx[2].value[0];
+		tempPackage.value[1] = canPackageTx[2].value[1];
+		tempPackage.value[2] = canPackageTx[2].value[2];
+
+		sendCan(&tempPackage);
+	}
+	if(counter_O == 40){
+			counter_O = 0;
+	}
+	else{
+		++counter_O;
+	}
 
 
-	sendCan(canPackageTx);
-
-
-}*/
+}
 
 
 
