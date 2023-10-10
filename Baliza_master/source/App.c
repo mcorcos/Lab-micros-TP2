@@ -32,7 +32,7 @@
 //TIMERS MS DEFINE
 #define TIMER_TX_MS 10
 #define TIMER_EVERY1500_MS 1500
-#define TIMER_UPDATE_MS 50
+#define TIMER_UPDATE_MS 200
 #define TIMER_RX_MS 100
 
 
@@ -156,8 +156,8 @@ void App_Init (void)
     timerStart(timerTx, TIMER_MS2TICKS(TIMER_TX_MS), TIM_MODE_PERIODIC, callbackTimerTx); //info para los timers
     timerStart(timerCanEvery1500mSecTx, TIMER_MS2TICKS(TIMER_EVERY1500_MS), TIM_MODE_PERIODIC, sendCompletePackageCan); //info para los timers
     timerStart(timerCanUpdateMovement_R_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_R_); //info para los timers
-    timerStart(timerCanUpdateMovement_C_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_C_); //info para los timers
-   	timerStart(timerCanUpdateMovement_O_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS), TIM_MODE_PERIODIC, sendUpdatedPackageCan_O_); //info para los timers
+    timerStart(timerCanUpdateMovement_C_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS+1), TIM_MODE_PERIODIC, sendUpdatedPackageCan_C_); //info para los timers
+   	timerStart(timerCanUpdateMovement_O_Tx, TIMER_MS2TICKS(TIMER_UPDATE_MS+2), TIM_MODE_PERIODIC, sendUpdatedPackageCan_O_); //info para los timers
 
    // timerStart(timerRx, TIMER_MS2TICKS(TIMER_RX_MS), TIM_MODE_PERIODIC, callbackTimerRx);
 
@@ -506,11 +506,11 @@ void sendUpdatedPackageCan_C_(void){
 void sendUpdatedPackageCan_O_(void){
 	static uint8_t counter_O = 0;
 
-	currentPackage = bufferDisp[4].orientation;;
+	currentPackage = bufferDisp[4].orientation;
 
 	if((IS_DIFFERENT(currentPackage, previousPackage)) || (counter_O == 40)){
 
-		previousPackage = bufferDisp[4].orientation; ;
+		previousPackage = bufferDisp[4].orientation;
 
 		tempPackage.dataType[0] = canPackageTx[2].dataType[0]; //Mando el segundo
 		tempPackage.sign = canPackageTx[2].sign;
